@@ -105,7 +105,7 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                       child: Center(
                                         child: Text(
-                                          'Speak into microphone',
+                                          'Speak',
                                           style: TextStyle(
                                             color: Colors.white,
                                             fontWeight: FontWeight.bold,
@@ -249,7 +249,15 @@ class TranscriptionHistoryPage extends StatelessWidget {
         ),
       ),
       body: Container(
-        // Build your transcription history menu here
+                            child: ListView.builder(
+                              itemCount: 100, // Replace with actual item count
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                  title: Text('File ${index + 1}'),
+                                  onTap: () {},   // Build your transcription history menu here
+      );
+                              }
+                            )
       ),
     );
   }
