@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:carousel_slider/carousel_slider.dart';
+//import 'package:audioplayers/audioplayers.dart';
+import 'package:just_audio/just_audio.dart' ;
 void main() {
   runApp(HomePageUI());
 }
@@ -236,6 +238,13 @@ class _HomePageState extends State<HomePage> {
 }
 
 class TranscriptionHistoryPage extends StatelessWidget {
+  final List<String> filenames = [
+    'Transcription 1',
+    'Transcription 2',
+    'Transcription 3',
+    // Add more filenames as needed
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -248,17 +257,132 @@ class TranscriptionHistoryPage extends StatelessWidget {
           },
         ),
       ),
-      body: Container(
-                            child: ListView.builder(
-                              itemCount: 100, // Replace with actual item count
-                              itemBuilder: (context, index) {
-                                return ListTile(
-                                  title: Text('File ${index + 1}'),
-                                  onTap: () {},   // Build your transcription history menu here
-      );
-                              }
-                            )
+      body: CarouselSlider(
+        items: filenames.map((filename) {
+          return Builder(
+            builder: (BuildContext context) {
+              return Container(
+                width: MediaQuery.of(context).size.width,
+                margin: EdgeInsets.symmetric(horizontal: 10.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      filename,
+                      style: TextStyle(
+                        fontSize: 24.0,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    SizedBox(height: 16.0),
+                    AudioPlayerWidget(audioPath: 'C:\Users\Hp\Downloads\Telegram Desktop\audio.mp3',),
+                    SizedBox(height: 16.0),
+                    TextField(
+                      readOnly: true,
+                      decoration: InputDecoration(
+                        labelText: 'Your text here',
+                      ),
+                    ),
+                    SizedBox(height: 16.0),
+                    ElevatedButton(
+                      onPressed: () {
+                        // Handle button press
+                      },
+                      child: Text('Submit'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          );
+        }).toList(),
+        options: CarouselOptions(
+          height: MediaQuery.of(context).size.height,
+          initialPage: 0,
+          enlargeCenterPage: true,
+          enableInfiniteScroll: true,
+        ),
       ),
+    );
+  }
+}
+
+class AudioPlayerWidget extends StatefulWidget {
+  final String audioPath;
+
+  AudioPlayerWidget({required this.audioPath});
+
+  @override
+  _AudioPlayerWidgetState createState() => _AudioPlayerWidgetState();
+}
+
+class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  double _progress = 0.0;
+
+  @override
+  void initState() {
+    super.initState();
+    _audioPlayer.positionStream.listen((duration) {
+      setState(() {
+        _progress = duration.inMilliseconds.toDouble();
+      });
+    });
+  }
+
+  void playAudio() async {
+    await _audioPlayer.setFilePath(widget.audioPath);
+    await _audioPlayer.play();
+  }
+
+  void pauseAudio() async {
+    await _audioPlayer.pause();
+  }
+
+  void stopAudio() async {
+    await _audioPlayer.stop();
+    await _audioPlayer.seek(Duration.zero);
+  }
+
+  void seekAudio(double value) async {
+    await _audioPlayer.seek(Duration(milliseconds: value.toInt()));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Slider(
+          value: _progress,
+          min: 0.0,
+          max: _audioPlayer.duration!.inMilliseconds.toDouble(),
+          onChanged: (value) {
+            setState(() {
+              _progress = value;
+            });
+          },
+          onChangeEnd: (value) {
+            seekAudio(value);
+          },
+        ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            IconButton(
+              icon: Icon(Icons.play_arrow),
+              onPressed: playAudio,
+            ),
+            IconButton(
+              icon: Icon(Icons.pause),
+              onPressed: pauseAudio,
+            ),
+            IconButton(
+              icon: Icon(Icons.stop),
+              onPressed: stopAudio,
+            ),
+          ],
+        ),
+      ],
     );
   }
 }
