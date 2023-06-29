@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 //import 'package:audioplayers/audioplayers.dart';
-import 'package:just_audio/just_audio.dart' ;
+//import 'package:just_audio/just_audio.dart' ;
+import 'package:assets_audio_player/assets_audio_player.dart';
+
 void main() {
   runApp(HomePageUI());
 }
@@ -208,11 +210,12 @@ class _HomePageState extends State<HomePage> {
                               },
                             ),
                             ListTile(
-                              leading: Icon(Icons.translate),
-                              title: Text('Translate to English'),
+                              leading: Icon(Icons.tips_and_updates),
+                              title: Text('Tutorial'),
                               onTap: () {
                                 // Handle menu item click
                                 _toggleMenu();
+                        
                               },
                             ),
                             ListTile(
@@ -220,7 +223,13 @@ class _HomePageState extends State<HomePage> {
                               title: Text('Accessibility Features'),
                               onTap: () {
                                 // Handle menu item click
-                                _toggleMenu();
+                                 _toggleMenu();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>AccessibilityOptionsPage(),
+                                  )  
+                                );     
                               },
                             ),
                           ],
@@ -237,6 +246,7 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
+
 class TranscriptionHistoryPage extends StatelessWidget {
   final List<String> filenames = [
     'Transcription 1',
@@ -244,6 +254,7 @@ class TranscriptionHistoryPage extends StatelessWidget {
     'Transcription 3',
     // Add more filenames as needed
   ];
+final assetsAudioPlayer = AssetsAudioPlayer();
 
   @override
   Widget build(BuildContext context) {
@@ -257,57 +268,90 @@ class TranscriptionHistoryPage extends StatelessWidget {
           },
         ),
       ),
-      body: CarouselSlider(
-        items: filenames.map((filename) {
-          return Builder(
-            builder: (BuildContext context) {
-              return Container(
-                width: MediaQuery.of(context).size.width,
-                margin: EdgeInsets.symmetric(horizontal: 10.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      filename,
-                      style: TextStyle(
-                        fontSize: 24.0,
-                        fontWeight: FontWeight.bold,
+      body: Container(
+        padding: EdgeInsets.all(16.0),
+        width: double.infinity,
+        color: Colors.black, // Set the background color to black for high contrast
+        child: CarouselSlider(
+          items: filenames.map((filename) {
+            return Builder(
+              builder: (BuildContext context) {
+                return Container(
+                  width: MediaQuery.of(context).size.width,
+                  margin: EdgeInsets.symmetric(horizontal: 10.0),
+                  decoration: BoxDecoration(
+                    color: Colors.white, // Set the container background color to white for high contrast
+                    borderRadius: BorderRadius.circular(10.0),
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        filename,
+                        style: TextStyle(
+                          fontSize: 24.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black, // Set the text color to black for high contrast
+                        ),
                       ),
-                    ),
-                    SizedBox(height: 16.0),
-                    AudioPlayerWidget(audioPath: 'C:\Users\Hp\Downloads\Telegram Desktop\audio.mp3',),
-                    SizedBox(height: 16.0),
-                    TextField(
-                      readOnly: true,
-                      decoration: InputDecoration(
-                        labelText: 'Your text here',
+                      SizedBox(height: 16.0),
+                      IconButton(
+                        icon: Icon(Icons.play_arrow),
+                        onPressed: () {
+                          assetsAudioPlayer.open(
+                            Audio("assets/audios/BlackPARADE.mp3"),
+                          );
+                        },
+                        color: Colors.black, // Set the icon color to black for high contrast
                       ),
-                    ),
-                    SizedBox(height: 16.0),
-                    ElevatedButton(
-                      onPressed: () {
-                        // Handle button press
-                      },
-                      child: Text('Submit'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        }).toList(),
-        options: CarouselOptions(
-          height: MediaQuery.of(context).size.height,
-          initialPage: 0,
-          enlargeCenterPage: true,
-          enableInfiniteScroll: true,
+                      SizedBox(height: 16.0),
+                      TextField(
+                        readOnly: true,
+                        style: TextStyle(
+                          color: Colors.black, // Set the text color to black for high contrast
+                        ),
+                        decoration: InputDecoration(
+                          labelText: 'Your text here',
+                          labelStyle: TextStyle(
+                            color: Colors.black, // Set the label color to black for high contrast
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderSide: BorderSide(
+                              color: Colors.black, // Set the border color to black for high contrast
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: 16.0),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Handle button press
+                        },
+                        child: Text('Translate to English'),
+                        style: ElevatedButton.styleFrom(
+                          primary: Colors.black, // Set the button background color to black for high contrast
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          }).toList(),
+          options: CarouselOptions(
+            height: MediaQuery.of(context).size.height,
+            initialPage: 0,
+            enlargeCenterPage: true,
+            enableInfiniteScroll: true,
+          ),
         ),
       ),
     );
   }
 }
 
-class AudioPlayerWidget extends StatefulWidget {
+
+/*class AudioPlayerWidget extends StatefulWidget {
   final String audioPath;
 
   AudioPlayerWidget({required this.audioPath});
@@ -383,6 +427,183 @@ class _AudioPlayerWidgetState extends State<AudioPlayerWidget> {
           ],
         ),
       ],
+    );
+  }
+}
+*/
+
+class AccessibilityOptionsPage extends StatefulWidget {
+  @override
+   Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Transcription History'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context); // Navigate back to the home page
+          },
+        ),
+      ),
+    );
+   }
+  _AccessibilityOptionsPageState createState() =>
+      _AccessibilityOptionsPageState();
+}
+
+class _AccessibilityOptionsPageState extends State<AccessibilityOptionsPage> {
+  bool _multilingualSupportEnabled = false;
+  bool _speechToTextTranscriptionEnabled = false;
+  bool _visualFeedbackEnabled = false;
+  bool _textToSpeechOutputEnabled = false;
+  bool _adjustablePlaybackSpeedEnabled = false;
+  bool _highContrastUIEnabled = false;
+  bool _keyboardNavigationEnabled = false;
+  bool _alternativeInputMethodsEnabled = false;
+  bool _captioningSupportEnabled = false;
+  bool _accessibilityGuidelinesComplianceEnabled = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Accessibility Options'),
+      ),
+      body: ListView(
+        padding: EdgeInsets.all(16),
+        children: [
+          ListTile(
+            leading: Icon(Icons.language),
+            title: Text('Multilingual Support'),
+            subtitle: Text('Provide support for multiple languages'),
+            trailing: Switch(
+              value: _multilingualSupportEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _multilingualSupportEnabled = value;
+                });
+              },
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.record_voice_over),
+            title: Text('Speech-to-Text Transcription'),
+            subtitle: Text('Ensure accurate conversion of spoken language to text'),
+            trailing: Switch(
+              value: _speechToTextTranscriptionEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _speechToTextTranscriptionEnabled = value;
+                });
+              },
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.visibility),
+            title: Text('Visual Feedback'),
+            subtitle: Text('Display visual cues during speech recognition'),
+            trailing: Switch(
+              value: _visualFeedbackEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _visualFeedbackEnabled = value;
+                });
+              },
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.volume_up),
+            title: Text('Text-to-Speech Output'),
+            subtitle: Text('Convert transcriptions to spoken words'),
+            trailing: Switch(
+              value: _textToSpeechOutputEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _textToSpeechOutputEnabled = value;
+                });
+              },
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.speed),
+            title: Text('Adjustable Playback Speed'),
+            subtitle: Text('Option to adjust audio playback speed'),
+            trailing: Switch(
+              value: _adjustablePlaybackSpeedEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _adjustablePlaybackSpeedEnabled = value;
+                });
+              },
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.palette),
+            title: Text('High Contrast UI'),
+            subtitle: Text('Design with high contrast colors'),
+            trailing: Switch(
+              value: _highContrastUIEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _highContrastUIEnabled = value;
+                });
+              },
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.keyboard),
+            title: Text('Keyboard Navigation'),
+            subtitle: Text('Navigate using keyboard inputs'),
+            trailing: Switch(
+              value: _keyboardNavigationEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _keyboardNavigationEnabled = value;
+                });
+              },
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.gesture),
+            title: Text('Alternative Input Methods'),
+            subtitle: Text('Support gesture-based controls or voice commands'),
+            trailing: Switch(
+              value: _alternativeInputMethodsEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _alternativeInputMethodsEnabled = value;
+                });
+              },
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.closed_caption),
+            title: Text('Captioning Support'),
+            subtitle: Text('Display captions alongside audio or transcriptions'),
+            trailing: Switch(
+              value: _captioningSupportEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _captioningSupportEnabled = value;
+                });
+              },
+            ),
+          ),
+          ListTile(
+            leading: Icon(Icons.accessibility_new),
+            title: Text('Accessibility Guidelines Compliance'),
+            subtitle: Text('Adhere to accessibility guidelines and standards'),
+            trailing: Switch(
+              value: _accessibilityGuidelinesComplianceEnabled,
+              onChanged: (value) {
+                setState(() {
+                  _accessibilityGuidelinesComplianceEnabled = value;
+                });
+              },
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
