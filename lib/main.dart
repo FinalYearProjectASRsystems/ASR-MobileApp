@@ -1,6 +1,6 @@
+import 'package:asr_ui/screens/homechat.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
-
 void main() {
   runApp(HomePageUI());
 }
@@ -46,13 +46,15 @@ class HomePage extends StatefulWidget {
   _HomePageState createState() => _HomePageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   bool isCardExpanded = false;
   bool isMenuOpen = false;
-  
- late bool multilingualSupportEnabled;
- late bool textState1;
-  late bool textState2;
+  late AnimationController _buttonController;
+  late Animation<double> _rotateAnimation;
+
+  bool multilingualSupportEnabled=false;
+  bool textState1=true;
+  bool textState2=false;
   late bool speechToTextTranscriptionEnabled;
   late bool visualFeedbackEnabled;
   late bool textToSpeechOutputEnabled;
@@ -75,12 +77,14 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  void _toggleMultilingualSupport(bool value) {
+  Future <void> _toggleMultilingualSupport(bool value) async {
     setState(() {
       multilingualSupportEnabled = value;
       textState1 = !value;
       textState2 = value;
     });
+     textState1 = !value;
+    textState2 = value;
   }
 
   void _toggleSpeechToTextTranscription(bool value) {
@@ -136,10 +140,18 @@ class _HomePageState extends State<HomePage> {
       accessibilityGuidelinesComplianceEnabled = value;
     });
   }
+  
 
   @override
    void initState() {
     super.initState();
+    _buttonController = AnimationController(
+      vsync: this,
+      duration: Duration(milliseconds: 500),);
+       _rotateAnimation = Tween<double>(
+      begin: 0.0,
+      end: 360.0,
+    ).animate(_buttonController);
      multilingualSupportEnabled = widget.initialMultilingualSupportEnabled;
     speechToTextTranscriptionEnabled = widget.initialSpeechToTextTranscriptionEnabled;
     visualFeedbackEnabled = widget.initialVisualFeedbackEnabled;
@@ -151,6 +163,12 @@ class _HomePageState extends State<HomePage> {
     captioningSupportEnabled = widget.initialCaptioningSupportEnabled;
     accessibilityGuidelinesComplianceEnabled = widget.initialAccessibilityGuidelinesComplianceEnabled;
   }
+   @override
+  void dispose() {
+    _buttonController.dispose(); // Dispose the animation controller
+    super.dispose();
+  }
+
 
 @override
   Widget build(BuildContext context) {
@@ -179,6 +197,7 @@ class _HomePageState extends State<HomePage> {
                     child: Center(
                       child: GestureDetector(
                         onTap: _toggleCardExpansion,
+                        
                         child: AnimatedContainer(
                           duration: Duration(milliseconds: 300),
                           width: isCardExpanded ? 300 : 200,
@@ -206,7 +225,12 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     )),
                                     SizedBox(height: 16.0),
-                                    AnimatedContainer(
+                                    AnimatedBuilder(animation: _rotateAnimation, 
+                                    builder:(context,child) {
+                                      return Transform.rotate(angle:  _rotateAnimation.value * 0.0174533, // Convert degrees to radians
+                  child: child,);
+                                    },
+                                   child: AnimatedContainer(
   duration: Duration(milliseconds: 500),
   width: 100,
   height: 100,
@@ -255,6 +279,8 @@ class _HomePageState extends State<HomePage> {
     ],
   ),
 ),
+                                    )
+                                   
 
                                   ],
                                 )
@@ -364,12 +390,15 @@ class _HomePageState extends State<HomePage> {
                             ),
                             ListTile(
                               leading: Icon(Icons.tips_and_updates),
-                              title: Text('Tutorial'),
+                              title: Text('Chatbot'),
                               onTap: () {
-                                // Handle menu item click
-                                _toggleMenu();
-                              },
-                            ),
+                                 _toggleMenu();
+                                 Navigator.push(
+                                       context,
+                                  MaterialPageRoute(builder: (context) => HomeChat()),
+                                                  );
+                                   },
+                            ),  
                             ListTile(
                               leading: Icon(Icons.accessibility),
                               title: Text('Accessibility Features'),
@@ -613,7 +642,10 @@ class AccessibilityOptionsPage extends StatelessWidget {
             subtitle: Text('Provide support for multiple languages'),
             trailing: Switch(
               value: multilingualSupportEnabled,
-              onChanged: toggleMultilingualSupport,
+              onChanged: (value) async{
+                await toggleMultilingualSupport(value);
+                Navigator.pop(context,multilingualSupportEnabled);
+              },
                  
               ),
               
