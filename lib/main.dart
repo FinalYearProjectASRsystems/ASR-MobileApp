@@ -47,6 +47,9 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
+  bool isRecording = false; // Added for recording functionality
+  bool isPlaying = false; // Added for audio playback
+  double audioProgress = 0.0; // Added for audio progress
   bool isCardExpanded = false;
   bool isMenuOpen = false;
   late AnimationController _buttonController;
@@ -65,11 +68,19 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late bool captioningSupportEnabled;
   late bool accessibilityGuidelinesComplianceEnabled;
 
-  void _toggleCardExpansion() {
-    setState(() {
-      isCardExpanded = !isCardExpanded;
-    });
-  }
+void _toggleCardExpansion() {
+  setState(() {
+    if (isRecording) {
+      _toggleRecording(); // Stop Recording
+      _toggleCompute(); // Toggle audio features
+    } else {
+      _toggleCompute(); // Toggle audio features
+     _toggleRecording(); // Start Recording
+    }
+  });
+    
+}
+
 
   void _toggleMenu() {
     setState(() {
@@ -140,7 +151,25 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       accessibilityGuidelinesComplianceEnabled = value;
     });
   }
-  
+    void _toggleRecording() {
+    setState(() {
+      isRecording = !isRecording;
+    });
+  }
+void _togglePlayback() {
+    setState(() {
+      isPlaying = !isPlaying;
+    });
+  }
+void _toggleCompute() {
+  setState(() {
+    // Reset audio playback features
+    isPlaying = true;
+    audioProgress = 0.0;
+    // Toggle visibility of audio features
+    isCardExpanded = !isCardExpanded;
+  });
+}
 
   @override
    void initState() {
@@ -170,7 +199,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   }
 
 
-@override
+ 
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -196,95 +226,101 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   Expanded(
                     child: Center(
                       child: GestureDetector(
-                        onTap: _toggleCardExpansion,
-                        
+/*onTap: () {
+                          if (isRecording) {
+                      
+                            _toggleRecording();
+                            _toggleCompute(); 
+                          } else {
+                            _toggleCompute(); 
+                            _toggleRecording();
+                          }
+                        },*/ //commented out ontap detector for the whole container
                         child: AnimatedContainer(
                           duration: Duration(milliseconds: 300),
                           width: isCardExpanded ? 300 : 200,
                           height: isCardExpanded ? 300 : 200,
                           decoration: BoxDecoration(
                             color: isCardExpanded
-                                ? Colors.purple[200]
-                                : Colors.purple[100],
+                                ? Color.fromARGB(255, 250, 234, 7)
+                                : Color.fromARGB(80, 24, 9, 235),
                             borderRadius: BorderRadius.circular(16.0),
                           ),
                           child: isCardExpanded
                               ? Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Visibility(visible: textState1,
-                                    child: TextField(
-                                      decoration: InputDecoration(
-                                        labelText: 'Transcribed Twi',
+                                    isRecording
+                                        ? ElevatedButton(
+                                            onPressed: () {
+                                              // Stop Recording logic
+                                              _toggleRecording();
+                                              _toggleCompute(); 
+                                            },
+                                            child: Text('Press to Stop Recording'),
+                                            style: ElevatedButton.styleFrom(
+                                              primary: Colors.red,
+                                            ),
+                                          )
+                                        : SizedBox.shrink(),
+                                    if (isPlaying)
+                                      Column(
+                                        children: [
+                                          Slider(
+                                            value: audioProgress,
+                                            onChanged: (double value) {
+                                              setState(() {
+                                                audioProgress = value;
+                                              });
+                                            },
+                                          ),
+                                          SizedBox(height: 8.0),
+                                          Container(
+                                            width: 120,
+                                            height: 40,
+                                            decoration: BoxDecoration(
+                                              color: Colors.orange,
+                                              borderRadius: BorderRadius.circular(20.0),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment: MainAxisAlignment.center,
+                                              children: [
+                                                IconButton(
+                                                  icon: Icon(
+                                                    isPlaying ? Icons.pause : Icons.play_arrow,
+                                                    color: Colors.white,
+                                                    size: 32,
+                                                  ),
+                                                  onPressed: _togglePlayback,
+                                                ),
+                                                IconButton(
+                                                  icon: Icon(
+                                                    Icons.volume_up,
+                                                    color: Colors.white,
+                                                    size: 32,
+                                                  ),
+                                                  onPressed: () {
+                                                    // Mute Button logic
+                                                  },
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                    )),
-                                    Visibility(visible: textState2,
-                                    child: TextField(
-                                      decoration: InputDecoration(
-                                        labelText: 'Twi nkyer3wee',
-                                      ),
-                                    )),
-                                    SizedBox(height: 16.0),
-                                    AnimatedBuilder(animation: _rotateAnimation, 
-                                    builder:(context,child) {
-                                      return Transform.rotate(angle:  _rotateAnimation.value * 0.0174533, // Convert degrees to radians
-                  child: child,);
-                                    },
-                                   child: AnimatedContainer(
-  duration: Duration(milliseconds: 500),
-  width: 100,
-  height: 100,
-  decoration: BoxDecoration(
-    shape: BoxShape.circle,
-    color: Colors.orange,
-    boxShadow: [
-      BoxShadow(
-        color: Colors.orange.withOpacity(0.5),
-        spreadRadius: 5,
-        blurRadius: 10,
-        offset: Offset(0, 3),
-      ),
-    ],
-  ),
-  child: Stack(
-    alignment: Alignment.center,
-    children: [
-      Visibility(
-        visible: textState1,
-        child: Center(
-          child: Text(
-            'Speak',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
-      Visibility(
-        visible: textState2,
-        child: Center(
-          child: Text(
-            'kasa',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ),
-      
-    ],
-  ),
-),
-                                    )
-                                   
+                                    ElevatedButton(
+                                      onPressed:() {
+                                      _toggleRecording();
+                                      },
 
+                                      child: Text('Compute'),
+                                      style: ElevatedButton.styleFrom(
+                                        primary: Colors.orange,
+                                    ),
+                                    ),
                                   ],
                                 )
-                              : Column(
+                                     : Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Visibility(
@@ -327,14 +363,60 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                       ),
                                     ),
                                   ],
-                                ),
+                                )
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
-            ),
+                 Positioned(
+                    top: 16.0,
+                    right: 16.0,
+                    child: Column(
+                      children: [
+                        SizedBox(
+                          width: 100,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              // Save Button logic
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: Colors.black),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.save),
+                                SizedBox(width: 4.0),
+                                Text('Save'),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(height: 8.0),
+                        SizedBox(
+                          width: 100,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              // Translate Button logic
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(color: Colors.black),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8.0),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(Icons.translate),
+                                SizedBox(width: 4.0),
+                                Text('Translate to English'),
+                              ],
+                            ),
+                          )
+                        ),
+
             if (isMenuOpen)
               Container(
                 color: Colors.black.withOpacity(0.5),
@@ -448,7 +530,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                                       accessibilityGuidelinesComplianceEnabled:
                                           accessibilityGuidelinesComplianceEnabled,
                                     ),
-                                  ),
+                                  )
                                 );
                               },
                             ),
@@ -460,8 +542,13 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 ),
               ),
           ],
-        ),
+         ),
       ),
+          ]
+      ),
+      ),]
+        ),
+      )
     );
   }
 }
