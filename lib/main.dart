@@ -1,6 +1,10 @@
 import 'package:asr_ui/screens/homechat.dart';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'dart:async';
+import 'package:audioplayers/audioplayers.dart';
+import 'package:nice_buttons/nice_buttons.dart';
+
 void main() {
   runApp(HomePageUI());
 }
@@ -217,7 +221,75 @@ void _toggleCompute() {
           }
         },
         child: Stack(
+          alignment: Alignment.topRight,
           children: [
+            Column(
+            mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.end,
+children:<Widget> [
+   SizedBox(
+      height: 10,),
+
+ /* Row(children: <Widget> [
+Text('  ')
+  ],),
+  SizedBox(height:10),
+  Container(
+    padding: EdgeInsets.all(20.0),
+    child: Text('Save'),
+      decoration: BoxDecoration(
+        color: Colors.cyan,
+        border: Border.all(color: Colors.black),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+
+  ),*/
+              NiceButtons(
+              stretch: false,
+              progress: true,
+              gradientOrientation: GradientOrientation.Horizontal,
+              onTap: (finish) {
+                print('On tap called');
+                Timer(Duration(seconds: 5), () {
+                  finish();
+                });
+              },
+              child: Text(
+                'Save',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
+
+    
+
+   /*Container(
+    padding: EdgeInsets.all(30.0),
+    child: Text('Translate To English'),
+    decoration: BoxDecoration(
+        color: Color.fromARGB(255, 238, 195, 5),
+        border: Border.all(color: Colors.black),
+        borderRadius: BorderRadius.circular(8.0),
+      ),
+
+
+  ),*/
+   Container(width: double.infinity, height: 10),
+            NiceButtons(
+              stretch: false,
+              gradientOrientation: GradientOrientation.Vertical,
+              onTap: (finish) {
+                print('On tap called');
+              },
+              child: Text(
+                'Translate to English',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
+
+],
+
+              
+            ),
             Container(
               padding: EdgeInsets.all(16.0),
               child: Column(
@@ -238,8 +310,8 @@ void _toggleCompute() {
                         },*/ //commented out ontap detector for the whole container
                         child: AnimatedContainer(
                           duration: Duration(milliseconds: 300),
-                          width: isCardExpanded ? 300 : 200,
-                          height: isCardExpanded ? 300 : 200,
+                          width: isCardExpanded ? 250 : 200,
+                          height: isCardExpanded ? 250 : 200,
                           decoration: BoxDecoration(
                             color: isCardExpanded
                                 ? Color.fromARGB(255, 250, 234, 7)
@@ -368,54 +440,10 @@ void _toggleCompute() {
                       ),
                     ),
                   ),
-                 Positioned(
-                    top: 16.0,
-                    right: 16.0,
-                    child: Column(
-                      children: [
-                        SizedBox(
-                          width: 100,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              // Save Button logic
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.black),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.save),
-                                SizedBox(width: 4.0),
-                                Text('Save'),
+              
                               ],
                             ),
                           ),
-                        ),
-                        SizedBox(height: 8.0),
-                        SizedBox(
-                          width: 100,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              // Translate Button logic
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(color: Colors.black),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8.0),
-                              ),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(Icons.translate),
-                                SizedBox(width: 4.0),
-                                Text('Translate to English'),
-                              ],
-                            ),
-                          )
-                        ),
 
             if (isMenuOpen)
               Container(
@@ -542,14 +570,9 @@ void _toggleCompute() {
                 ),
               ),
           ],
-         ),
-      ),
-          ]
-      ),
-      ),]
-        ),
-      )
-    );
+                        ),
+                      )
+         );
   }
 }
 
