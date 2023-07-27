@@ -246,7 +246,7 @@ print('Error playing record: $e');
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ASR FRONTEND'), 
+        title: Text('Home'), 
         leading: IconButton(
           icon: Icon(Icons.menu),
           onPressed: _toggleMenu,
@@ -364,7 +364,6 @@ Text('  ')
                                         ? ElevatedButton(
                                             onPressed: () {
                                               // Stop Recording logic
-                                              stopRecording();
                                     
                                             },
                                             child: Text('Press to Stop Recording'),
@@ -402,18 +401,19 @@ Text('  ')
                                                     color: Colors.white,
                                                     size: 32,
                                                   ),
-                                                  onPressed: playRecording,
+                                                  onPressed: stopRecording,
                                                 ),
-                                                /*IconButton(
+                                                IconButton(
                                                   icon: Icon(
                                                     Icons.volume_up,
                                                     color: Colors.white,
                                                     size: 32,
                                                   ),
-                                                  onPressed: () {
+                                                  onPressed: playRecording,
+                                                ),
                                                     // Mute Button logic
-                                                  },
-                                                ),*/
+                                                  
+                                              
                                               ],
                                             ),
                                           ),
