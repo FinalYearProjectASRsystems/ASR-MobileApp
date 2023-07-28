@@ -541,8 +541,8 @@ Text('  ')
                               },
                             ),
                             ListTile(
-                              leading: Icon(Icons.tips_and_updates),
-                              title: Text('Chatbot'),
+                              leading: Icon(Icons.chat),
+                              title: Text('Chatroom'),
                               onTap: () {
                                  _toggleMenu();
                                  Navigator.push(

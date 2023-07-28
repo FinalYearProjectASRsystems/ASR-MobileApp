@@ -32,6 +32,12 @@ class _ChatPageState extends State<ChatPage> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
+        IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context); 
+          },
+        ),
                     Text(
                       "Conversations",
                       style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
