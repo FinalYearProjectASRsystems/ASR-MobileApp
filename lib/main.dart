@@ -1,4 +1,4 @@
-
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:asr_ui/screens/homechat.dart';
 import 'package:flutter/material.dart';
 //import 'package:carousel_slider/carousel_slider.dart';
@@ -6,6 +6,11 @@ import 'dart:async';
 import 'package:nice_buttons/nice_buttons.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+
 
 void main() {
   runApp(HomePageUI());
@@ -79,13 +84,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
 
 void _toggleCardExpansion() {
   setState(() {
-    if (isRecording) {
-      _toggleRecording(); // Stop Recording
-      _toggleCompute(); // Toggle audio features
-    } else {
-      _toggleCompute(); // Toggle audio features
-     _toggleRecording(); // Start Recording
-    }
+   isCardExpanded=!isCardExpanded;
+    
   });
     
 }
@@ -167,13 +167,13 @@ void _toggleCardExpansion() {
   }
 void _togglePlayback() {
     setState(() {
-      isPlaying = !isPlaying;
+      isPlaying = true;
     });
   }
 void _toggleCompute() {
   setState(() {
     // Reset audio playback features
-    isPlaying = true;
+    //isPlaying = !isPlaying;
     audioProgress = 0.0;
     // Toggle visibility of audio features
     isCardExpanded = !isCardExpanded;
@@ -212,10 +212,12 @@ if(await audioRecord.hasPermission())
 {
   await audioRecord.start();
  _toggleRecording();
+      Fluttertoast.showToast(msg: 'Recording started');
 }
     }
     catch(e){
       print('Error Start recording: $e');
+       Fluttertoast.showToast(msg: 'Error starting recording');
     }
   }
   Future<void> stopRecording() async{
@@ -224,10 +226,12 @@ if(await audioRecord.hasPermission())
 setState((){
   isRecording= false;
    audioPath = path!;
+    Fluttertoast.showToast(msg: 'Recording stopped');
 });    
     }
     catch(e){
       print('error stopping recording: $e');
+      Fluttertoast.showToast(msg: 'Error stopping recording');
     }
   }
 Future<void> playRecording() async{
@@ -237,10 +241,56 @@ try{
 }
 catch(e){
 print('Error playing record: $e');
+ Fluttertoast.showToast(msg: 'Error playing recording');
 
 }
 
 }
+Future<void> saveRecording() async {
+  if (audioPath != null) {
+    try {
+      // Get the app's documents directory
+      Directory appDocDir = await getApplicationDocumentsDirectory();
+
+      // Create a new file with the current timestamp as the name
+      File recordingFile = File('${appDocDir.path}/${DateTime.now().millisecondsSinceEpoch}.mp3');
+
+      // Copy the recorded audio file to the new location
+      await File(audioPath!).copy(recordingFile.path);
+
+      Fluttertoast.showToast(msg: 'Recording saved successfully');
+    } catch (e) {
+      print('Error saving recording: $e');
+      Fluttertoast.showToast(msg: 'Error saving recording');
+    }
+  } else {
+    Fluttertoast.showToast(msg: 'No recording to save');
+  }
+}
+Future<Map<String, dynamic>> query(String filename, String apiToken) async {
+  final data = await File(filename).readAsBytes();
+  final url = Uri.parse(
+      'https://api-inference.huggingface.co/models/ayertey01/wav2vec2-large-xlsr-53-AsanteTwi-07');
+
+  final response = await http.post(
+    url,
+    headers: {'Authorization': 'Bearer $apiToken'},
+    body: data,
+  );
+
+  if (response.statusCode == 200) {
+    return json.decode(response.body);
+  } else {
+    throw Exception('Failed to transcribe audio.');
+  }
+}
+
+void main() async {
+  final apiToken = 'Bearer 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';
+  final result = await query('sample1.flac', apiToken);
+ String AsrResult= (json.encode(result));
+}
+
  
   @override
   Widget build(BuildContext context) {
@@ -287,7 +337,7 @@ Text('  ')
               progress: true,
               gradientOrientation: GradientOrientation.Horizontal,
               onTap: (finish) {
-                print('On tap called');
+                saveRecording();
                 Timer(Duration(seconds: 5), () {
                   finish();
                 });
@@ -362,10 +412,12 @@ Text('  ')
                                   children: [
                                     isRecording
                                         ? ElevatedButton(
-                                            onPressed: () {
+                                            onPressed: (){
+                                              stopRecording();
+                                             _togglePlayback();
+                                             },
+                                             
                                               // Stop Recording logic
-                                    
-                                            },
                                             child: Text('Press to Stop Recording'),
                                             style: ElevatedButton.styleFrom(
                                               primary: Colors.red,
@@ -401,7 +453,8 @@ Text('  ')
                                                     color: Colors.white,
                                                     size: 32,
                                                   ),
-                                                  onPressed: stopRecording,
+                                                  onPressed:()
+                                                  {},
                                                 ),
                                                 IconButton(
                                                   icon: Icon(
@@ -471,7 +524,8 @@ Text('  ')
                                           size: 32,
                                         ),
                                         onPressed:() {startRecording();
-                                        _toggleCardExpansion();}
+                                        _toggleCardExpansion();
+                                       }
                                         
                                       ),
                                     ),
