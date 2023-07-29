@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
 
 
 void main() {
@@ -67,6 +68,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late Record audioRecord;
   late AudioPlayer audioPlayer;
   String audioPath= '';
+  String outputPath= '';
 
   bool multilingualSupportEnabled=false;
   bool textState1=true;
@@ -223,11 +225,13 @@ if(await audioRecord.hasPermission())
   Future<void> stopRecording() async{
     try{
       String? path= await audioRecord.stop();
+      await convertToFlac(audioPath!);
 setState((){
   isRecording= false;
    audioPath = path!;
     Fluttertoast.showToast(msg: 'Recording stopped');
 });    
+
     }
     catch(e){
       print('error stopping recording: $e');
@@ -246,8 +250,9 @@ print('Error playing record: $e');
 }
 
 }
-Future<void> saveRecording() async {
+/*Future<void> saveRecording() async {
   if (audioPath != null) {
+    
     try {
       // Get the app's documents directory
       Directory appDocDir = await getApplicationDocumentsDirectory();
@@ -266,7 +271,7 @@ Future<void> saveRecording() async {
   } else {
     Fluttertoast.showToast(msg: 'No recording to save');
   }
-}
+}*/
 Future<Map<String, dynamic>> query(String filename, String apiToken) async {
   final data = await File(filename).readAsBytes();
   final url = Uri.parse(
@@ -287,8 +292,34 @@ Future<Map<String, dynamic>> query(String filename, String apiToken) async {
 
 void main() async {
   final apiToken = 'Bearer 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';
-  final result = await query('sample1.flac', apiToken);
+  final result = await query(outputPath, apiToken);
  String AsrResult= (json.encode(result));
+}
+Future<void> convertToFlac(String inputPath) async {
+  try {
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    String outputPath = '${appDocDir.path}/${DateTime.now().millisecondsSinceEpoch}.flac';
+
+    final FlutterFFmpeg _flutterFFmpeg = FlutterFFmpeg();
+    int result = await _flutterFFmpeg.execute(
+      '-i $inputPath -c:a flac $outputPath',
+    );
+
+    if (result == 0) {
+      // Conversion successful
+      setState(() {
+        audioPath = outputPath;
+      });
+
+      Fluttertoast.showToast(msg: 'Audio converted to FLAC');
+    } else {
+      // Conversion failed
+      Fluttertoast.showToast(msg: 'Error converting audio to FLAC');
+    }
+  } catch (e) {
+    print('Error converting audio: $e');
+    Fluttertoast.showToast(msg: 'Error converting audio');
+  }
 }
 
  
@@ -337,7 +368,7 @@ Text('  ')
               progress: true,
               gradientOrientation: GradientOrientation.Horizontal,
               onTap: (finish) {
-                saveRecording();
+               // saveRecording();
                 Timer(Duration(seconds: 5), () {
                   finish();
                 });
@@ -453,8 +484,8 @@ Text('  ')
                                                     color: Colors.white,
                                                     size: 32,
                                                   ),
-                                                  onPressed:()
-                                                  {},
+                                                  onPressed:playRecording,
+                                        
                                                 ),
                                                 IconButton(
                                                   icon: Icon(
@@ -462,7 +493,7 @@ Text('  ')
                                                     color: Colors.white,
                                                     size: 32,
                                                   ),
-                                                  onPressed: playRecording,
+                                                  onPressed: (){}
                                                 ),
                                                     // Mute Button logic
                                                   
@@ -472,16 +503,27 @@ Text('  ')
                                           ),
                                         ],
                                       ),
-                                    /*ElevatedButton(
-                                      onPressed:() {
-                                      _toggleRecording();
-                                      },
-
-                                      child: Text('Compute'),
-                                      style: ElevatedButton.styleFrom(
-                                        primary: Colors.orange,
-                                    ),
-                                    ),*/
+                                      if(isPlaying)
+                                      Column(
+                                        children: [
+                                          NiceButtons(
+              stretch: false,
+              progress: true,
+              gradientOrientation: GradientOrientation.Horizontal,
+              onTap: (finish) {
+               // saveRecording();
+                Timer(Duration(seconds: 10), () {
+                  finish();
+                });
+              },
+              child: Text(
+                'Compute',
+                style: TextStyle(color: Colors.white, fontSize: 18),
+              ),
+            ),
+                                        ],
+                                      )
+                              
                                   ],
                                 )
                                      : Column(
