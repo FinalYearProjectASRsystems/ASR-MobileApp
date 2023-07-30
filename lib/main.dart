@@ -10,7 +10,13 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+//import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
+import 'package:record_mp3/record_mp3.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+
+
 
 
 void main() {
@@ -69,7 +75,8 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late AudioPlayer audioPlayer;
   String audioPath= '';
   String outputPath= '';
-
+ String _asrResult = '';
+  bool _isLoading = false;
   bool multilingualSupportEnabled=false;
   bool textState1=true;
   bool textState2=false;
@@ -82,6 +89,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late bool alternativeInputMethodsEnabled;
   late bool captioningSupportEnabled;
   late bool accessibilityGuidelinesComplianceEnabled;
+   String statusText = "";
+   
+  
   
 
 void _toggleCardExpansion() {
@@ -208,9 +218,18 @@ void _toggleCompute() {
        audioPlayer.dispose();
      super.dispose();
   }
-  Future<void> startRecording() async{
+  Future<bool> checkPermission() async {
+    if (!await Permission.microphone.isGranted) {
+      PermissionStatus status = await Permission.microphone.request();
+      if (status != PermissionStatus.granted) {
+        return false;
+      }
+    }
+    return true;
+  }
+/*Future<void> startRecording() async{
     try{
-if(await audioRecord.hasPermission())
+if(await)
 {
   await audioRecord.start();
  _toggleRecording();
@@ -221,11 +240,40 @@ if(await audioRecord.hasPermission())
       print('Error Start recording: $e');
        Fluttertoast.showToast(msg: 'Error starting recording');
     }
+  }*/
+  int i = 0;
+
+  Future<String> getFilePath() async {
+    Directory storageDirectory = await getApplicationDocumentsDirectory();
+    String sdPath = storageDirectory.path + "/record";
+    var d = Directory(sdPath);
+    if (!d.existsSync()) {
+      d.createSync(recursive: true);
+    }
+    return sdPath + "/test_${i++}.mp3";
   }
-  Future<void> stopRecording() async{
+  
+  void startRecording() async {
+    bool hasPermission = await checkPermission();
+                    _toggleRecording();
+    if (hasPermission) {
+      recordFilePath = await getFilePath();
+      RecordMp3.instance.start(recordFilePath, (type) {
+        statusText = "Record error--->$type";
+        setState(() {
+        });
+      });
+    } else {
+      Fluttertoast.showToast(msg:"No microphone permission");
+    }
+    setState(() {});
+  }
+ /* Future<void> stopRecording() async{
     try{
       String? path= await audioRecord.stop();
-      await convertToFlac(audioPath!);
+      audioPath = path!;
+      Fluttertoast.showToast(msg:'$audioPath');
+      await convertToMp3(audioPath);
 setState((){
   isRecording= false;
    audioPath = path!;
@@ -238,7 +286,19 @@ setState((){
       Fluttertoast.showToast(msg: 'Error stopping recording');
     }
   }
-Future<void> playRecording() async{
+*/
+ void stopRecording() {
+    bool s = RecordMp3.instance.stop();
+    if (s) {
+      statusText = "Record complete";
+      setState(() {
+         isRecording= false;
+         Fluttertoast.showToast(msg: 'Recording stopped');
+      });
+    }
+  }
+
+/*Future<void> playRecording() async{
 try{
   Source urlSource = UrlSource(audioPath);
   await audioPlayer.play(urlSource);
@@ -249,7 +309,17 @@ print('Error playing record: $e');
 
 }
 
-}
+}*/
+String recordFilePath="";
+void playRecording() {
+    if (recordFilePath != null && File(recordFilePath).existsSync()) {
+      AudioPlayer audioPlayer = AudioPlayer();
+      Source filePathUrl = UrlSource(recordFilePath);
+      audioPlayer.play(filePathUrl);
+    }
+  }
+
+
 /*Future<void> saveRecording() async {
   if (audioPath != null) {
     
@@ -272,56 +342,105 @@ print('Error playing record: $e');
     Fluttertoast.showToast(msg: 'No recording to save');
   }
 }*/
-Future<Map<String, dynamic>> query(String filename, String apiToken) async {
-  final data = await File(filename).readAsBytes();
+/*Future<Map<String, dynamic>> query(String audioPath) async {
+  final data =  File(audioPath).readAsBytesSync();
   final url = Uri.parse(
       'https://api-inference.huggingface.co/models/ayertey01/wav2vec2-large-xlsr-53-AsanteTwi-07');
 
   final response = await http.post(
     url,
-    headers: {'Authorization': 'Bearer $apiToken'},
+    headers: {"Authorization": "Bearer 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",
+    "Content-Type":"audio/flac",
+    },
     body: data,
   );
 
   if (response.statusCode == 200) {
+Fluttertoast.showToast(msg: 'Audio transcribed');
     return json.decode(response.body);
+    
   } else {
     throw Exception('Failed to transcribe audio.');
   }
+}*/
+final String apiURL =
+    "https://api-inference.huggingface.co/models/ayertey01/wav2vec2-large-xlsr-53-AsanteTwi-07";
+final String apiToken = "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";
+
+Future<Map<String, dynamic>> query(String audioPath) async {
+  final File file = File(audioPath);
+  final List<int> data = await file.readAsBytes();
+
+  final Map<String, String> headers = {
+    "Authorization": "Bearer $apiToken",
+    "Content-Type": "audio/mp3", // Modify this if your file format is different
+  };
+
+  final http.Response response =
+      await http.post(Uri.parse(apiURL), headers: headers, body: data);
+
+  if (response.statusCode == 200) {
+    Fluttertoast.showToast(msg: 'Audio transcribed');
+    return json.decode(response.body);
+    
+
+  } else {
+    throw Exception('Failed to query API. Status code: ${response.statusCode}');
+  }
 }
 
-void main() async {
+
+
+/*void main() async {
   final apiToken = 'Bearer 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';
   final result = await query(outputPath, apiToken);
  String AsrResult= (json.encode(result));
-}
-Future<void> convertToFlac(String inputPath) async {
+}*/
+
+/*Future<void> convertToMp3(String inputPath) async {
   try {
     Directory appDocDir = await getApplicationDocumentsDirectory();
-    String outputPath = '${appDocDir.path}/${DateTime.now().millisecondsSinceEpoch}.flac';
+    String outputPath = '${appDocDir.path}/${DateTime.now().millisecondsSinceEpoch}.mp3';
 
-    final FlutterFFmpeg _flutterFFmpeg = FlutterFFmpeg();
-    int result = await _flutterFFmpeg.execute(
-      '-i $inputPath -c:a flac $outputPath',
-    );
+    await FFmpegKit.executeAsync('-i $inputPath -c:a libmp3lame $outputPath');
 
-    if (result == 0) {
+    // Check if the output file was created
+    bool outputFileExists = await File(outputPath).exists();
+
+    if (outputFileExists) {
       // Conversion successful
+      Fluttertoast.showToast(msg: 'Conversion to mp3 successful');
       setState(() {
         audioPath = outputPath;
       });
 
-      Fluttertoast.showToast(msg: 'Audio converted to FLAC');
+      Fluttertoast.showToast(msg: '$audioPath');
     } else {
       // Conversion failed
-      Fluttertoast.showToast(msg: 'Error converting audio to FLAC');
+      Fluttertoast.showToast(msg: 'Error converting audio to mp3');
     }
   } catch (e) {
     print('Error converting audio: $e');
     Fluttertoast.showToast(msg: 'Error converting audio');
   }
-}
+}*/
 
+
+
+ Future<void> queryAsr() async {
+    try {
+//final apiToken = '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';
+      Map<String, dynamic> output = await query(recordFilePath);
+      print(output);
+      // Do something with the asrResult (e.g., store it in a state variable)
+     /* setState(() {
+        // Store the ASR result in a state variable
+       _asrResult = asrResult;
+      });*/
+    } catch (e) {
+      print('Error querying ASR: $e');
+    }
+  }
  
   @override
   Widget build(BuildContext context) {
@@ -511,7 +630,7 @@ Text('  ')
               progress: true,
               gradientOrientation: GradientOrientation.Horizontal,
               onTap: (finish) {
-               // saveRecording();
+                queryAsr();
                 Timer(Duration(seconds: 10), () {
                   finish();
                 });
