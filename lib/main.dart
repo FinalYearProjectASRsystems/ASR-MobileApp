@@ -15,6 +15,9 @@ import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:record_mp3/record_mp3.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import 'screens/AsrCard.dart';
+
+
 
 
 
@@ -90,6 +93,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late bool captioningSupportEnabled;
   late bool accessibilityGuidelinesComplianceEnabled;
    String statusText = "";
+   bool isComputing= false;
    
   
   
@@ -255,7 +259,6 @@ if(await)
   
   void startRecording() async {
     bool hasPermission = await checkPermission();
-                    _toggleRecording();
     if (hasPermission) {
       recordFilePath = await getFilePath();
       RecordMp3.instance.start(recordFilePath, (type) {
@@ -364,7 +367,7 @@ Fluttertoast.showToast(msg: 'Audio transcribed');
   }
 }*/
 final String apiURL =
-    "https://api-inference.huggingface.co/models/ayertey01/wav2vec2-large-xlsr-53-AsanteTwi-07";
+    "https://api-inference.huggingface.co/models/ayertey01/wav2vec2-large-xlsr-53-AsanteTwi-06second";
 final String apiToken = "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";
 
 Future<Map<String, dynamic>> query(String audioPath) async {
@@ -431,7 +434,7 @@ Future<Map<String, dynamic>> query(String audioPath) async {
     try {
 //final apiToken = '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';
       Map<String, dynamic> output = await query(recordFilePath);
-      print(output);
+      _asrResult= jsonEncode(output);
       // Do something with the asrResult (e.g., store it in a state variable)
      /* setState(() {
         // Store the ASR result in a state variable
@@ -614,10 +617,7 @@ Text('  ')
                                                   ),
                                                   onPressed: (){}
                                                 ),
-                                                    // Mute Button logic
-                                                  
-                                              
-                                              ],
+                                                         ],
                                             ),
                                           ),
                                         ],
@@ -631,7 +631,11 @@ Text('  ')
               gradientOrientation: GradientOrientation.Horizontal,
               onTap: (finish) {
                 queryAsr();
-                Timer(Duration(seconds: 10), () {
+               Navigator.push(
+                                       context,
+                                  MaterialPageRoute(builder: (context) => CardExampleApp(asrResultValue:_asrResult)),
+                                                  );
+                Timer(Duration(seconds: 5), () {
                   finish();
                 });
               },
@@ -645,6 +649,8 @@ Text('  ')
                               
                                   ],
                                 )
+                                                    // Mute Button logic
+                                      
                                      : Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -685,6 +691,7 @@ Text('  ')
                                           size: 32,
                                         ),
                                         onPressed:() {startRecording();
+                                         _toggleRecording();
                                         _toggleCardExpansion();
                                        }
                                         
@@ -702,7 +709,8 @@ Text('  ')
                             ),
                           ),
 
-            if (isMenuOpen)
+  
+         if (isMenuOpen)
               Container(
                 color: Colors.black.withOpacity(0.5),
                 child: Stack(
@@ -912,7 +920,7 @@ class TranscriptionHistoryPage extends StatelessWidget {
                               onPressed: () {
                                 // Handle translation logic here
                               },
-                              child: Text('Translate to English'),
+                              child: Text('New Recording'),
                               style: ElevatedButton.styleFrom(
                                 primary: Colors.black, // Set the button background color to black for high contrast
                               ),
