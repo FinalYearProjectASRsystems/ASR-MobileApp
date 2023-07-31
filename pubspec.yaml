@@ -47,7 +47,6 @@ dependencies:
   ffmpeg_kit_flutter: ^5.1.0
   record_mp3: ^3.0.0
   permission_handler: ^10.4.3
-  
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -99,4 +98,5 @@ flutter:
   #         weight: 700
   #
   # For details regarding fonts from package dependencies,
+
   # see https://flutter.dev/custom-fonts/#from-packages
