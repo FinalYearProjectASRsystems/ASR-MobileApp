@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 
-/// Flutter code sample for [Card].
-
-
 class CardExampleApp extends StatelessWidget {
-  CardExampleApp({super.key, required this.asrResultValue});
-    String asrResultValue='';
+  final String asrResultValue;
+
+  CardExampleApp({required this.asrResultValue});
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -13,24 +12,36 @@ class CardExampleApp extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-             ListTile(
+            ListTile(
               leading: Icon(Icons.album),
-              title: Text('Transcribed Twi'),
-              subtitle: Text(asrResultValue),
+              title: Text(
+                'Transcribed Twi',
+                style: TextStyle(fontFamily: 'NotoSans', fontSize: 18),
+              ),
+              subtitle: Text(
+                asrResultValue,
+                style: TextStyle(fontFamily: 'NotoSans'),
+              ),
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: <Widget>[
                 TextButton(
-                  child:  Text('Copy'),
+                  child: Text(
+                    'Copy',
+                    style: TextStyle(fontFamily: 'NotoSans'),
+                  ),
                   onPressed: () {/* ... */},
                 ),
-                 SizedBox(width: 8),
+                SizedBox(width: 8),
                 TextButton(
-                  child:  Text('Translate'),
+                  child: Text(
+                    'Translate',
+                    style: TextStyle(fontFamily: 'Noto Sans'),
+                  ),
                   onPressed: () {/* ... */},
                 ),
-                 SizedBox(width: 8),
+                SizedBox(width: 8),
               ],
             ),
           ],

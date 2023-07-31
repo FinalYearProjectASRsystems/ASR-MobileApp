@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:asr_ui/screens/homechat.dart';
 import 'package:flutter/material.dart';
@@ -76,9 +78,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late AnimationController _buttonController;
   late Record audioRecord;
   late AudioPlayer audioPlayer;
+  String asrResultUtf8String= '';
+  List<int> utf8Bytes= [];
   String audioPath= '';
   String outputPath= '';
  String _asrResult = '';
+ var asrResultEncoded;
   bool _isLoading = false;
   bool multilingualSupportEnabled=false;
   bool textState1=true;
@@ -435,6 +440,10 @@ Future<Map<String, dynamic>> query(String audioPath) async {
 //final apiToken = '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';
       Map<String, dynamic> output = await query(recordFilePath);
       _asrResult= jsonEncode(output);
+      utf8Bytes = utf8.encode(_asrResult);
+      asrResultUtf8String = utf8.decode(utf8Bytes);
+     /* asrResultEncoded= utf8.encode(_asrResult);
+      Uint8List bytes = utf8.encode(String results) as Uint8List;*/
       // Do something with the asrResult (e.g., store it in a state variable)
      /* setState(() {
         // Store the ASR result in a state variable
@@ -633,7 +642,7 @@ Text('  ')
                 queryAsr();
                Navigator.push(
                                        context,
-                                  MaterialPageRoute(builder: (context) => CardExampleApp(asrResultValue:_asrResult)),
+                                  MaterialPageRoute(builder: (context) => CardExampleApp(asrResultValue:asrResultUtf8String)),
                                                   );
                 Timer(Duration(seconds: 5), () {
                   finish();
