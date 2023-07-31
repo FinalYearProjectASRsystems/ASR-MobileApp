@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:record/record.dart';
 import 'dart:async';
 import 'package:nice_buttons/nice_buttons.dart';
@@ -7,6 +8,15 @@ import 'package:asr_ui/screens/homechat.dart';
 
 import 'accessibility_options_page.dart';
 import 'transcription_history_page.dart';
+import 'package:path_provider/path_provider.dart';
+import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+//import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
+import 'package:record_mp3/record_mp3.dart';
+import 'package:permission_handler/permission_handler.dart';
+
+import '../screens/AsrCard.dart';
 
 class HomePage extends StatefulWidget {
   final bool initialMultilingualSupportEnabled;
@@ -47,7 +57,9 @@ class _HomePageState extends State<HomePage>
   late Record audioRecord;
   late AudioPlayer audioPlayer;
   String audioPath = '';
-
+  String outputPath = '';
+  String _asrResult = '';
+  bool _isLoading = false;
   bool multilingualSupportEnabled = false;
   bool textState1 = true;
   bool textState2 = false;
@@ -60,16 +72,12 @@ class _HomePageState extends State<HomePage>
   late bool alternativeInputMethodsEnabled;
   late bool captioningSupportEnabled;
   late bool accessibilityGuidelinesComplianceEnabled;
+  String statusText = "";
+  bool isComputing = false;
 
   void _toggleCardExpansion() {
     setState(() {
-      if (isRecording) {
-        _toggleRecording(); // Stop Recording
-        _toggleCompute(); // Toggle audio features
-      } else {
-        _toggleCompute(); // Toggle audio features
-        _toggleRecording(); // Start Recording
-      }
+      isCardExpanded = !isCardExpanded;
     });
   }
 
@@ -151,14 +159,14 @@ class _HomePageState extends State<HomePage>
 
   void _togglePlayback() {
     setState(() {
-      isPlaying = !isPlaying;
+      isPlaying = true;
     });
   }
 
   void _toggleCompute() {
     setState(() {
       // Reset audio playback features
-      isPlaying = true;
+      //isPlaying = !isPlaying;
       audioProgress = 0.0;
       // Toggle visibility of audio features
       isCardExpanded = !isCardExpanded;
@@ -198,35 +206,222 @@ class _HomePageState extends State<HomePage>
     super.dispose();
   }
 
-  Future<void> startRecording() async {
-    try {
-      if (await audioRecord.hasPermission()) {
-        await audioRecord.start();
-        _toggleRecording();
+  Future<bool> checkPermission() async {
+    if (!await Permission.microphone.isGranted) {
+      PermissionStatus status = await Permission.microphone.request();
+      if (status != PermissionStatus.granted) {
+        return false;
       }
-    } catch (e) {
-      print('Error Start recording: $e');
     }
+    return true;
   }
 
-  Future<void> stopRecording() async {
-    try {
-      String? path = await audioRecord.stop();
+/*Future<void> startRecording() async{
+    try{
+if(await)
+{
+  await audioRecord.start();
+ _toggleRecording();
+      Fluttertoast.showToast(msg: 'Recording started');
+}
+    }
+    catch(e){
+      print('Error Start recording: $e');
+       Fluttertoast.showToast(msg: 'Error starting recording');
+    }
+  }*/
+  int i = 0;
+
+  Future<String> getFilePath() async {
+    Directory storageDirectory = await getApplicationDocumentsDirectory();
+    String sdPath = storageDirectory.path + "/record";
+    var d = Directory(sdPath);
+    if (!d.existsSync()) {
+      d.createSync(recursive: true);
+    }
+    return sdPath + "/test_${i++}.mp3";
+  }
+
+  void startRecording() async {
+    bool hasPermission = await checkPermission();
+    if (hasPermission) {
+      recordFilePath = await getFilePath();
+      RecordMp3.instance.start(recordFilePath, (type) {
+        statusText = "Record error--->$type";
+        setState(() {});
+      });
+    } else {
+      Fluttertoast.showToast(msg: "No microphone permission");
+    }
+    setState(() {});
+  }
+
+  /* Future<void> stopRecording() async{
+    try{
+      String? path= await audioRecord.stop();
+      audioPath = path!;
+      Fluttertoast.showToast(msg:'$audioPath');
+      await convertToMp3(audioPath);
+setState((){
+  isRecording= false;
+   audioPath = path!;
+    Fluttertoast.showToast(msg: 'Recording stopped');
+});    
+
+    }
+    catch(e){
+      print('error stopping recording: $e');
+      Fluttertoast.showToast(msg: 'Error stopping recording');
+    }
+  }
+*/
+  void stopRecording() {
+    bool s = RecordMp3.instance.stop();
+    if (s) {
+      statusText = "Record complete";
       setState(() {
         isRecording = false;
-        audioPath = path!;
+        Fluttertoast.showToast(msg: 'Recording stopped');
       });
-    } catch (e) {
-      print('error stopping recording: $e');
     }
   }
 
-  Future<void> playRecording() async {
+/*Future<void> playRecording() async{
+try{
+  Source urlSource = UrlSource(audioPath);
+  await audioPlayer.play(urlSource);
+}
+catch(e){
+print('Error playing record: $e');
+ Fluttertoast.showToast(msg: 'Error playing recording');
+
+}
+
+}*/
+  String recordFilePath = "";
+  void playRecording() {
+    if (recordFilePath != null && File(recordFilePath).existsSync()) {
+      AudioPlayer audioPlayer = AudioPlayer();
+      Source filePathUrl = UrlSource(recordFilePath);
+      audioPlayer.play(filePathUrl);
+    }
+  }
+
+/*Future<void> saveRecording() async {
+  if (audioPath != null) {
+    
     try {
-      Source urlSource = UrlSource(audioPath);
-      await audioPlayer.play(urlSource);
+      // Get the app's documents directory
+      Directory appDocDir = await getApplicationDocumentsDirectory();
+
+      // Create a new file with the current timestamp as the name
+      File recordingFile = File('${appDocDir.path}/${DateTime.now().millisecondsSinceEpoch}.mp3');
+
+      // Copy the recorded audio file to the new location
+      await File(audioPath!).copy(recordingFile.path);
+
+      Fluttertoast.showToast(msg: 'Recording saved successfully');
     } catch (e) {
-      print('Error playing record: $e');
+      print('Error saving recording: $e');
+      Fluttertoast.showToast(msg: 'Error saving recording');
+    }
+  } else {
+    Fluttertoast.showToast(msg: 'No recording to save');
+  }
+}*/
+/*Future<Map<String, dynamic>> query(String audioPath) async {
+  final data =  File(audioPath).readAsBytesSync();
+  final url = Uri.parse(
+      'https://api-inference.huggingface.co/models/ayertey01/wav2vec2-large-xlsr-53-AsanteTwi-07');
+
+  final response = await http.post(
+    url,
+    headers: {"Authorization": "Bearer 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",
+    "Content-Type":"audio/flac",
+    },
+    body: data,
+  );
+
+  if (response.statusCode == 200) {
+Fluttertoast.showToast(msg: 'Audio transcribed');
+    return json.decode(response.body);
+    
+  } else {
+    throw Exception('Failed to transcribe audio.');
+  }
+}*/
+  final String apiURL =
+      "https://api-inference.huggingface.co/models/ayertey01/wav2vec2-large-xlsr-53-AsanteTwi-06second";
+  final String apiToken = "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";
+
+  Future<Map<String, dynamic>> query(String audioPath) async {
+    final File file = File(audioPath);
+    final List<int> data = await file.readAsBytes();
+
+    final Map<String, String> headers = {
+      "Authorization": "Bearer $apiToken",
+      "Content-Type":
+          "audio/mp3", // Modify this if your file format is different
+    };
+
+    final http.Response response =
+        await http.post(Uri.parse(apiURL), headers: headers, body: data);
+
+    if (response.statusCode == 200) {
+      Fluttertoast.showToast(msg: 'Audio transcribed');
+      return json.decode(response.body);
+    } else {
+      throw Exception(
+          'Failed to query API. Status code: ${response.statusCode}');
+    }
+  }
+
+/*void main() async {
+  final apiToken = 'Bearer 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';
+  final result = await query(outputPath, apiToken);
+ String AsrResult= (json.encode(result));
+}*/
+
+/*Future<void> convertToMp3(String inputPath) async {
+  try {
+    Directory appDocDir = await getApplicationDocumentsDirectory();
+    String outputPath = '${appDocDir.path}/${DateTime.now().millisecondsSinceEpoch}.mp3';
+
+    await FFmpegKit.executeAsync('-i $inputPath -c:a libmp3lame $outputPath');
+
+    // Check if the output file was created
+    bool outputFileExists = await File(outputPath).exists();
+
+    if (outputFileExists) {
+      // Conversion successful
+      Fluttertoast.showToast(msg: 'Conversion to mp3 successful');
+      setState(() {
+        audioPath = outputPath;
+      });
+
+      Fluttertoast.showToast(msg: '$audioPath');
+    } else {
+      // Conversion failed
+      Fluttertoast.showToast(msg: 'Error converting audio to mp3');
+    }
+  } catch (e) {
+    print('Error converting audio: $e');
+    Fluttertoast.showToast(msg: 'Error converting audio');
+  }
+}*/
+
+  Future<void> queryAsr() async {
+    try {
+//final apiToken = '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';
+      Map<String, dynamic> output = await query(recordFilePath);
+      _asrResult = jsonEncode(output);
+      // Do something with the asrResult (e.g., store it in a state variable)
+      /* setState(() {
+        // Store the ASR result in a state variable
+       _asrResult = asrResult;
+      });*/
+    } catch (e) {
+      print('Error querying ASR: $e');
     }
   }
 
@@ -234,7 +429,7 @@ class _HomePageState extends State<HomePage>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('ASR FRONTEND'),
+        title: Text('Home'),
       ),
       body: Stack(
         alignment: Alignment.topRight,
@@ -381,33 +576,53 @@ Text('  ')
                                                     ),
                                                     onPressed: playRecording,
                                                   ),
-                                                /*IconButton(
-                                                icon: Icon(
-                                                  Icons.volume_up,
-                                                  color: Colors.white,
-                                                  size: 32,
-                                                ),
-                                                onPressed: () {
-                                                  // Mute Button logic
-                                                },
-                                              ),*/
+                                                IconButton(
+                                                    icon: Icon(
+                                                      Icons.volume_up,
+                                                      color: Colors.white,
+                                                      size: 32,
+                                                    ),
+                                                    onPressed: () {}),
                                               ],
                                             ),
                                           ),
                                         ],
                                       ),
-                                    /*ElevatedButton(
-                                    onPressed:() {
-                                    _toggleRecording();
-                                    },
-
-                                    child: Text('Compute'),
-                                    style: ElevatedButton.styleFrom(
-                                      primary: Colors.orange,
-                                  ),
-                                  ),*/
+                                    if (isPlaying)
+                                      Column(
+                                        children: [
+                                          NiceButtons(
+                                            stretch: false,
+                                            progress: true,
+                                            gradientOrientation:
+                                                GradientOrientation.Horizontal,
+                                            onTap: (finish) {
+                                              queryAsr();
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                    builder: (context) =>
+                                                        CardExampleApp(
+                                                            asrResultValue:
+                                                                _asrResult)),
+                                              );
+                                              Timer(Duration(seconds: 5), () {
+                                                finish();
+                                              });
+                                            },
+                                            child: Text(
+                                              'Compute',
+                                              style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontSize: 18),
+                                            ),
+                                          ),
+                                        ],
+                                      )
                                   ],
                                 )
+                              // Mute Button logic
+
                               : Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
@@ -450,6 +665,7 @@ Text('  ')
                                           ),
                                           onPressed: () {
                                             startRecording();
+                                            _toggleRecording();
                                             _toggleCardExpansion();
                                           }),
                                     ),
