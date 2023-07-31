@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-class AccessibilityOptionsPage extends StatelessWidget {
+class AccessibilityOptionsPage extends StatefulWidget {
   final Function(bool) toggleMultilingualSupport;
   final bool multilingualSupportEnabled;
   final Function(bool) toggleSpeechToTextTranscription;
@@ -46,7 +46,63 @@ class AccessibilityOptionsPage extends StatelessWidget {
   });
 
   @override
+  State<AccessibilityOptionsPage> createState() =>
+      _AccessibilityOptionsPageState();
+}
+
+class _AccessibilityOptionsPageState extends State<AccessibilityOptionsPage> {
+  bool multilingualSupportEnabled = false;
+  bool speechToTextTranscriptionEnabled = false;
+  bool visualFeedbackEnabled = false;
+  bool textToSpeechOutputEnabled = false;
+  bool adjustablePlaybackSpeedEnabled = false;
+  bool highContrastUIEnabled = false;
+  bool keyboardNavigationEnabled = false;
+  bool alternativeInputMethodsEnabled = false;
+  bool captioningSupportEnabled = false;
+  bool accessibilityGuidelinesComplianceEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    multilingualSupportEnabled = widget.multilingualSupportEnabled;
+    speechToTextTranscriptionEnabled = widget.speechToTextTranscriptionEnabled;
+    visualFeedbackEnabled = widget.visualFeedbackEnabled;
+    textToSpeechOutputEnabled = widget.textToSpeechOutputEnabled;
+    adjustablePlaybackSpeedEnabled = widget.adjustablePlaybackSpeedEnabled;
+    highContrastUIEnabled = widget.highContrastUIEnabled;
+    keyboardNavigationEnabled = widget.keyboardNavigationEnabled;
+    alternativeInputMethodsEnabled = widget.alternativeInputMethodsEnabled;
+    captioningSupportEnabled = widget.captioningSupportEnabled;
+    accessibilityGuidelinesComplianceEnabled =
+        widget.accessibilityGuidelinesComplianceEnabled;
+  }
+
+  @override
   Widget build(BuildContext context) {
+    Function(bool) toggleMultilingualSupport = widget.toggleMultilingualSupport;
+
+    Function(bool) toggleSpeechToTextTranscription =
+        widget.toggleSpeechToTextTranscription;
+    Function(bool) toggleVisualFeedback = widget.toggleVisualFeedback;
+
+    Function(bool) toggleTextToSpeechOutput = widget.toggleTextToSpeechOutput;
+
+    Function(bool) toggleAdjustablePlaybackSpeed =
+        widget.toggleAdjustablePlaybackSpeed;
+
+    Function(bool) toggleHighContrastUI = widget.toggleHighContrastUI;
+
+    Function(bool) toggleKeyboardNavigation = widget.toggleKeyboardNavigation;
+
+    Function(bool) toggleAlternativeInputMethods =
+        widget.toggleAlternativeInputMethods;
+
+    Function(bool) toggleCaptioningSupport = widget.toggleCaptioningSupport;
+
+    Function(bool) toggleAccessibilityGuidelinesCompliance =
+        widget.toggleAccessibilityGuidelinesCompliance;
+
     return Scaffold(
       appBar: AppBar(
         title: Text('Accessibility Options'),
@@ -60,23 +116,31 @@ class AccessibilityOptionsPage extends StatelessWidget {
             subtitle: Text('Provide support for multiple languages'),
             trailing: Switch(
               value: multilingualSupportEnabled,
-              onChanged: (value) async{
+              onChanged: (value) async {
                 await toggleMultilingualSupport(value);
-                Navigator.pop(context,multilingualSupportEnabled);
+                Navigator.pop(context, multilingualSupportEnabled);
               },
-                 
-              ),
-              
+            ),
           ),
-        
+          Divider(
+            thickness: 1,
+          ),
           ListTile(
             leading: Icon(Icons.mic),
             title: Text('Speech-to-Text Transcription'),
             subtitle: Text('Convert spoken words into text'),
             trailing: Switch(
               value: speechToTextTranscriptionEnabled,
-              onChanged: toggleSpeechToTextTranscription,
+              onChanged: (value) {
+                setState(() {
+                  speechToTextTranscriptionEnabled = value;
+                  toggleSpeechToTextTranscription(value);
+                });
+              },
             ),
+          ),
+          Divider(
+            thickness: 1,
           ),
           ListTile(
             leading: Icon(Icons.visibility),
@@ -84,26 +148,48 @@ class AccessibilityOptionsPage extends StatelessWidget {
             subtitle: Text('Provide visual indicators or feedback'),
             trailing: Switch(
               value: visualFeedbackEnabled,
-              onChanged: toggleVisualFeedback,
+              onChanged: (value) {
+                setState(() {
+                  visualFeedbackEnabled = value;
+                  toggleVisualFeedback(value);
+                });
+              },
             ),
+          ),
+          Divider(
+            thickness: 1,
           ),
           ListTile(
             leading: Icon(Icons.volume_up),
             title: Text('Text-to-Speech Output'),
             subtitle: Text('Convert text into spoken words'),
             trailing: Switch(
-              value: textToSpeechOutputEnabled,
-              onChanged: toggleTextToSpeechOutput,
-            ),
+                value: textToSpeechOutputEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    textToSpeechOutputEnabled = value;
+                    toggleTextToSpeechOutput(value);
+                  });
+                }),
+          ),
+          Divider(
+            thickness: 1,
           ),
           ListTile(
             leading: Icon(Icons.speed),
             title: Text('Adjustable Playback Speed'),
             subtitle: Text('Allow users to control the playback speed'),
             trailing: Switch(
-              value: adjustablePlaybackSpeedEnabled,
-              onChanged: toggleAdjustablePlaybackSpeed,
-            ),
+                value: adjustablePlaybackSpeedEnabled,
+                onChanged: (value) {
+                  setState(() {
+                    adjustablePlaybackSpeedEnabled = value;
+                    toggleAdjustablePlaybackSpeed(value);
+                  });
+                }),
+          ),
+          Divider(
+            thickness: 1,
           ),
           ListTile(
             leading: Icon(Icons.color_lens),
@@ -111,8 +197,16 @@ class AccessibilityOptionsPage extends StatelessWidget {
             subtitle: Text('Enable high contrast user interface'),
             trailing: Switch(
               value: highContrastUIEnabled,
-              onChanged: toggleHighContrastUI,
+              onChanged: (value) {
+                setState(() {
+                  highContrastUIEnabled = value;
+                  toggleHighContrastUI(value);
+                });
+              },
             ),
+          ),
+          Divider(
+            thickness: 1,
           ),
           ListTile(
             leading: Icon(Icons.keyboard),
@@ -120,8 +214,16 @@ class AccessibilityOptionsPage extends StatelessWidget {
             subtitle: Text('Navigate the app using the keyboard'),
             trailing: Switch(
               value: keyboardNavigationEnabled,
-              onChanged: toggleKeyboardNavigation,
+              onChanged: (value) {
+                setState(() {
+                  keyboardNavigationEnabled = value;
+                  toggleKeyboardNavigation(value);
+                });
+              },
             ),
+          ),
+          Divider(
+            thickness: 1,
           ),
           ListTile(
             leading: Icon(Icons.keyboard_hide),
@@ -129,8 +231,16 @@ class AccessibilityOptionsPage extends StatelessWidget {
             subtitle: Text('Support alternative input methods'),
             trailing: Switch(
               value: alternativeInputMethodsEnabled,
-              onChanged: toggleAlternativeInputMethods,
+              onChanged: (value) {
+                setState(() {
+                  alternativeInputMethodsEnabled = value;
+                  toggleAlternativeInputMethods(value);
+                });
+              },
             ),
+          ),
+          Divider(
+            thickness: 1,
           ),
           ListTile(
             leading: Icon(Icons.closed_caption),
@@ -138,8 +248,16 @@ class AccessibilityOptionsPage extends StatelessWidget {
             subtitle: Text('Provide captions for audio and video content'),
             trailing: Switch(
               value: captioningSupportEnabled,
-              onChanged: toggleCaptioningSupport,
+              onChanged: (value) {
+                setState(() {
+                  captioningSupportEnabled = value;
+                  toggleCaptioningSupport(value);
+                });
+              },
             ),
+          ),
+          Divider(
+            thickness: 1,
           ),
           ListTile(
             leading: Icon(Icons.rule),
@@ -147,7 +265,12 @@ class AccessibilityOptionsPage extends StatelessWidget {
             subtitle: Text('Ensure compliance with accessibility guidelines'),
             trailing: Switch(
               value: accessibilityGuidelinesComplianceEnabled,
-              onChanged: toggleAccessibilityGuidelinesCompliance,
+              onChanged: (value) {
+                setState(() {
+                  accessibilityGuidelinesComplianceEnabled = value;
+                  toggleAccessibilityGuidelinesCompliance(value);
+                });
+              },
             ),
           ),
         ],

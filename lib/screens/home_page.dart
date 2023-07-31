@@ -19,29 +19,7 @@ import 'package:permission_handler/permission_handler.dart';
 import '../screens/AsrCard.dart';
 
 class HomePage extends StatefulWidget {
-  final bool initialMultilingualSupportEnabled;
-  final bool initialSpeechToTextTranscriptionEnabled;
-  final bool initialVisualFeedbackEnabled;
-  final bool initialTextToSpeechOutputEnabled;
-  final bool initialAdjustablePlaybackSpeedEnabled;
-  final bool initialHighContrastUIEnabled;
-  final bool initialKeyboardNavigationEnabled;
-  final bool initialAlternativeInputMethodsEnabled;
-  final bool initialCaptioningSupportEnabled;
-  final bool initialAccessibilityGuidelinesComplianceEnabled;
-
-  HomePage({
-    this.initialMultilingualSupportEnabled = false,
-    this.initialSpeechToTextTranscriptionEnabled = false,
-    this.initialVisualFeedbackEnabled = false,
-    this.initialTextToSpeechOutputEnabled = false,
-    this.initialAdjustablePlaybackSpeedEnabled = false,
-    this.initialHighContrastUIEnabled = false,
-    this.initialKeyboardNavigationEnabled = false,
-    this.initialAlternativeInputMethodsEnabled = false,
-    this.initialCaptioningSupportEnabled = false,
-    this.initialAccessibilityGuidelinesComplianceEnabled = false,
-  });
+  const HomePage({super.key});
   @override
   _HomePageState createState() => _HomePageState();
 }
@@ -63,15 +41,15 @@ class _HomePageState extends State<HomePage>
   bool multilingualSupportEnabled = false;
   bool textState1 = true;
   bool textState2 = false;
-  late bool speechToTextTranscriptionEnabled;
-  late bool visualFeedbackEnabled;
-  late bool textToSpeechOutputEnabled;
-  late bool adjustablePlaybackSpeedEnabled;
-  late bool highContrastUIEnabled;
-  late bool keyboardNavigationEnabled;
-  late bool alternativeInputMethodsEnabled;
-  late bool captioningSupportEnabled;
-  late bool accessibilityGuidelinesComplianceEnabled;
+  bool speechToTextTranscriptionEnabled = false;
+  bool visualFeedbackEnabled = false;
+  bool textToSpeechOutputEnabled = false;
+  bool adjustablePlaybackSpeedEnabled = false;
+  bool highContrastUIEnabled = false;
+  bool keyboardNavigationEnabled = false;
+  bool alternativeInputMethodsEnabled = false;
+  bool captioningSupportEnabled = false;
+  bool accessibilityGuidelinesComplianceEnabled = false;
   String statusText = "";
   bool isComputing = false;
 
@@ -182,20 +160,6 @@ class _HomePageState extends State<HomePage>
       vsync: this,
       duration: Duration(milliseconds: 500),
     );
-    multilingualSupportEnabled = widget.initialMultilingualSupportEnabled;
-    speechToTextTranscriptionEnabled =
-        widget.initialSpeechToTextTranscriptionEnabled;
-    visualFeedbackEnabled = widget.initialVisualFeedbackEnabled;
-    textToSpeechOutputEnabled = widget.initialTextToSpeechOutputEnabled;
-    adjustablePlaybackSpeedEnabled =
-        widget.initialAdjustablePlaybackSpeedEnabled;
-    highContrastUIEnabled = widget.initialHighContrastUIEnabled;
-    keyboardNavigationEnabled = widget.initialKeyboardNavigationEnabled;
-    alternativeInputMethodsEnabled =
-        widget.initialAlternativeInputMethodsEnabled;
-    captioningSupportEnabled = widget.initialCaptioningSupportEnabled;
-    accessibilityGuidelinesComplianceEnabled =
-        widget.initialAccessibilityGuidelinesComplianceEnabled;
   }
 
   @override
@@ -685,7 +649,7 @@ Text('  ')
         children: [
           const DrawerHeader(
             decoration: BoxDecoration(
-              color: Colors.purple,
+              color: Colors.amber,
             ),
             child: Text(
               'Automatic Speech Recognition',
@@ -708,6 +672,9 @@ Text('  ')
               );
             },
           ),
+          Divider(
+            thickness: 3,
+          ),
           ListTile(
             leading: Icon(Icons.tips_and_updates),
             title: Text('Chatbot'),
@@ -718,6 +685,9 @@ Text('  ')
                 MaterialPageRoute(builder: (context) => HomeChat()),
               );
             },
+          ),
+          Divider(
+            thickness: 3,
           ),
           ListTile(
             leading: Icon(Icons.accessibility),
@@ -759,6 +729,9 @@ Text('  ')
                     ),
                   ));
             },
+          ),
+          Divider(
+            thickness: 3,
           ),
         ],
       )),

@@ -12,15 +12,10 @@ class HomePageUI extends StatelessWidget {
     return MaterialApp(
       title: 'Home Page UI',
       theme: ThemeData(
-        primarySwatch: Colors.purple,
+        primarySwatch: Colors.amber,
         hintColor: Colors.orange,
       ),
       home: HomePage(),
     );
   }
 }
-
-
-
-
-
