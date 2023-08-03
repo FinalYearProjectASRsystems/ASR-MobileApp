@@ -47,6 +47,8 @@ dependencies:
   ffmpeg_kit_flutter: ^5.1.0
   record_mp3: ^3.0.0
   permission_handler: ^10.4.3
+  google_fonts: ^4.0.4
+  sqflite: ^2.0.0+4
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -72,6 +74,15 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
    - assets/audios/
+   - assets\images\photo_2023-08-01_12-06-52.jpg
+   - assets\images\photo_2023-08-01_12-07-49.jpg
+   - assets\images\photo_2023-08-01_12-07-56.jpg
+   - assets\images\photo_2023-08-01_13-00-12.jpg
+   - assets\images\photo_2023-08-01_13-00-21.jpg
+   - assets\images\photo_2023-08-01_14-12-32.jpg
+   - assets\images\photo_2023-08-01_14-12-38.jpg
+   - assets\images\photo_2023-08-01_14-12-45.jpg
+   - assets\images\photo_2023-08-02_03-56-48.jpg
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

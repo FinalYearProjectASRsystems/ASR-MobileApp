@@ -1,8 +1,9 @@
 import 'dart:typed_data';
-
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:asr_ui/screens/homechat.dart';
 import 'package:flutter/material.dart';
+import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
 //import 'package:carousel_slider/carousel_slider.dart';
 import 'dart:async';
 import 'package:nice_buttons/nice_buttons.dart';
@@ -12,11 +13,10 @@ import 'package:path_provider/path_provider.dart';
 import 'dart:io';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-//import 'package:flutter_ffmpeg/flutter_ffmpeg.dart';
-import 'package:ffmpeg_kit_flutter/ffmpeg_kit.dart';
 import 'package:record_mp3/record_mp3.dart';
 import 'package:permission_handler/permission_handler.dart';
-
+import 'package:google_fonts/google_fonts.dart';
+import 'database.dart';
 import 'screens/AsrCard.dart';
 
 
@@ -34,8 +34,7 @@ class HomePageUI extends StatelessWidget {
     return MaterialApp(
       title: 'Home Page UI',
       theme: ThemeData(
-        primarySwatch: Colors.purple,
-        hintColor: Colors.orange,
+
       ),
       home: HomePage(),
     );
@@ -81,6 +80,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   String asrResultUtf8String= '';
   List<int> utf8Bytes= [];
   String audioPath= '';
+  Source _blankUrl = UrlSource("/assets/black");
   String outputPath= '';
  String _asrResult = '';
  var asrResultEncoded;
@@ -99,8 +99,15 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
   late bool accessibilityGuidelinesComplianceEnabled;
    String statusText = "";
    bool isComputing= false;
+   bool isPlayButtonVisible= true;
    
-  
+  void _togglePlaypause() {
+  setState(() {
+   isPlayButtonVisible= !isPlayButtonVisible;
+    
+  });
+    
+}
   
 
 void _toggleCardExpansion() {
@@ -191,15 +198,23 @@ void _togglePlayback() {
       isPlaying = true;
     });
   }
-void _toggleCompute() {
+
+void newRecording() {
   setState(() {
-    // Reset audio playback features
-    //isPlaying = !isPlaying;
-    audioProgress = 0.0;
-    // Toggle visibility of audio features
-    isCardExpanded = !isCardExpanded;
+  isRecording= false;
+  isPlaying= false;
+  audioPath= '';
+  _toggleCardExpansion();
   });
 }
+void saveRecording(String audioPath, String transcription) async {
+  DatabaseHelper dbHelper = DatabaseHelper();
+  await dbHelper.insertRecording({
+    'audioPath': audioPath,
+    'transcription': transcription,
+  });
+}
+
 
   @override
    void initState() {
@@ -306,18 +321,8 @@ setState((){
     }
   }
 
-/*Future<void> playRecording() async{
-try{
-  Source urlSource = UrlSource(audioPath);
-  await audioPlayer.play(urlSource);
-}
-catch(e){
-print('Error playing record: $e');
- Fluttertoast.showToast(msg: 'Error playing recording');
 
-}
 
-}*/
 String recordFilePath="";
 void playRecording() {
     if (recordFilePath != null && File(recordFilePath).existsSync()) {
@@ -326,6 +331,9 @@ void playRecording() {
       audioPlayer.play(filePathUrl);
     }
   }
+  void pauseAudio() {
+  audioPlayer.stop();
+}
 
 
 /*Future<void> saveRecording() async {
@@ -389,7 +397,7 @@ Future<Map<String, dynamic>> query(String audioPath) async {
 
   if (response.statusCode == 200) {
     Fluttertoast.showToast(msg: 'Audio transcribed');
-    return json.decode(response.body);
+    return json.decode(utf8.decode(response.bodyBytes));
     
 
   } else {
@@ -440,15 +448,17 @@ Future<Map<String, dynamic>> query(String audioPath) async {
 //final apiToken = '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';
       Map<String, dynamic> output = await query(recordFilePath);
       _asrResult= jsonEncode(output);
-      utf8Bytes = utf8.encode(_asrResult);
-      asrResultUtf8String = utf8.decode(utf8Bytes);
-     /* asrResultEncoded= utf8.encode(_asrResult);
-      Uint8List bytes = utf8.encode(String results) as Uint8List;*/
-      // Do something with the asrResult (e.g., store it in a state variable)
-     /* setState(() {
-        // Store the ASR result in a state variable
-       _asrResult = asrResult;
-      });*/
+      Navigator.push(
+                                  context as BuildContext,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        MyHomePage(asrResultValue: _asrResult,),
+                                  ),
+      );
+    
+    setState(() {
+    
+    });
     } catch (e) {
       print('Error querying ASR: $e');
     }
@@ -458,6 +468,7 @@ Future<Map<String, dynamic>> query(String audioPath) async {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.black38,
         title: Text('Home'), 
         leading: IconButton(
           icon: Icon(Icons.menu),
@@ -472,7 +483,18 @@ Future<Map<String, dynamic>> query(String audioPath) async {
         },
         child: Stack(
           alignment: Alignment.topRight,
+          
+        
           children: [
+            Container(
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/photo_2023-08-01_14-12-38.jpg'),
+          fit: BoxFit.cover,
+        ),
+      ),
+            ),
+
             Column(
             mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.end,
@@ -497,15 +519,18 @@ Text('  ')
               NiceButtons(
               stretch: false,
               progress: true,
+              endColor: Colors.black,
+              startColor: Colors.white,
+              borderColor: Colors.transparent,
               gradientOrientation: GradientOrientation.Horizontal,
               onTap: (finish) {
-               // saveRecording();
+               saveRecording(recordFilePath, _asrResult);
                 Timer(Duration(seconds: 5), () {
                   finish();
                 });
               },
               child: Text(
-                'Save',
+                'Save Transcription',
                 style: TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),
@@ -526,12 +551,15 @@ Text('  ')
    Container(width: double.infinity, height: 10),
             NiceButtons(
               stretch: false,
+              endColor: Colors.black,
+              startColor: Colors.white,
+              borderColor: Colors.transparent,
               gradientOrientation: GradientOrientation.Vertical,
               onTap: (finish) {
-                print('On tap called');
+                newRecording();
               },
               child: Text(
-                'Translate to English',
+                'Restart Recording',
                 style: TextStyle(color: Colors.white, fontSize: 18),
               ),
             ),
@@ -560,12 +588,12 @@ Text('  ')
                         },*/ //commented out ontap detector for the whole container
                         child: AnimatedContainer(
                           duration: Duration(milliseconds: 300),
-                          width: isCardExpanded ? 250 : 200,
-                          height: isCardExpanded ? 250 : 200,
+                          width: isCardExpanded ? 300 : 200,
+                          height: isCardExpanded ? 300 : 200,
                           decoration: BoxDecoration(
                             color: isCardExpanded
-                                ? Color.fromARGB(255, 250, 234, 7)
-                                : Color.fromARGB(80, 24, 9, 235),
+                                ? Color.fromARGB(255, 118, 125, 127)
+                                : Color.fromARGB(255, 22, 23, 24),
                             borderRadius: BorderRadius.circular(16.0),
                           ),
                           child: isCardExpanded
@@ -591,41 +619,59 @@ Text('  ')
                                         children: [
                                           Slider(
                                             value: audioProgress,
+                                            thumbColor: Colors.black,
+                                            inactiveColor: Colors.white,
                                             onChanged: (double value) {
                                               setState(() {
                                                 audioProgress = value;
                                               });
                                             },
                                           ),
-                                          SizedBox(height: 8.0),
+                                          SizedBox(height: 6.5),
                                           Container(
                                             width: 120,
                                             height: 40,
                                             decoration: BoxDecoration(
-                                              color: Colors.orange,
+                                              color: Color.fromARGB(255, 255, 255, 255),
                                               borderRadius: BorderRadius.circular(20.0),
                                             ),
                                             child: Row(
                                               mainAxisAlignment: MainAxisAlignment.center,
                                               children: [
-                                                if(!isRecording && audioPath != null)
+                                               // if(!isRecording && audioPath != null)
+                                              if(isPlayButtonVisible) 
                                                 IconButton(
-                                                  icon: Icon(
-                                                   Icons.play_arrow,
-                                                    color: Colors.white,
+                                                   icon: Icon(Icons.play_arrow,
+                                                    color: Colors.black,
                                                     size: 32,
                                                   ),
-                                                  onPressed:playRecording,
+                                                  onPressed:() {
+                                                    setState(() {
+                                                      isPlayButtonVisible= !isPlayButtonVisible;
+                                                    });
+                                                        playRecording();
+                                                  }
                                         
                                                 ),
-                                                IconButton(
-                                                  icon: Icon(
-                                                    Icons.volume_up,
-                                                    color: Colors.white,
+                                              if(!isPlayButtonVisible)
+                                                 IconButton(
+                                                   icon: Icon(Icons.pause_circle_filled,
+                                                    color: const Color.fromARGB(255, 13, 7, 7),
                                                     size: 32,
                                                   ),
-                                                  onPressed: (){}
+                                                
+                                                  onPressed: (){
+                                                    setState(() {
+                                                      isPlayButtonVisible= !isPlayButtonVisible;
+                                                    });
+                                                    audioPlayer.play(_blankUrl);
+                                                  }
+                                                             
                                                 ),
+                                                
+                                                
+
+                                              
                                                          ],
                                             ),
                                           ),
@@ -634,17 +680,27 @@ Text('  ')
                                       if(isPlaying)
                                       Column(
                                         children: [
+                                          SizedBox(height: 20.0,),
                                           NiceButtons(
               stretch: false,
               progress: true,
+              //stretch: false,
+              endColor: Colors.black,
+              startColor: Colors.black,
+              borderColor: Colors.transparent,
               gradientOrientation: GradientOrientation.Horizontal,
               onTap: (finish) {
                 queryAsr();
-               Navigator.push(
-                                       context,
-                                  MaterialPageRoute(builder: (context) => CardExampleApp(asrResultValue:asrResultUtf8String)),
-                                                  );
-                Timer(Duration(seconds: 5), () {
+                  Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        MyHomePage(asrResultValue: _asrResult,),
+                                  ),
+                  );
+                   //  Navigator.pop(context, _asrResult);
+                              
+                Timer(Duration(seconds: 3), () {
                   finish();
                 });
               },
@@ -691,12 +747,12 @@ Text('  ')
                                       height: 50,
                                       decoration: BoxDecoration(
                                         shape: BoxShape.circle,
-                                        color: Colors.orange,
+                                        color: Colors.greenAccent,
                                       ),
                                       child: IconButton(
                                         icon: Icon(
                                           Icons.mic,
-                                          color: const Color.fromARGB(255, 110, 81, 81),
+                                          color: Color.fromARGB(255, 1, 1, 1),
                                           size: 32,
                                         ),
                                         onPressed:() {startRecording();
@@ -741,7 +797,7 @@ Text('  ')
                       bottom: 0,
                       left: 0,
                       child: Container(
-                        width: MediaQuery.of(context).size.width * 0.4,
+                        width: MediaQuery.of(context).size.width * 0.6,
                         color: Colors.white,
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -772,7 +828,7 @@ Text('  ')
                                 );
                               },
                             ),
-                            ListTile(
+                            /*ListTile(
                               leading: Icon(Icons.chat),
                               title: Text('Chatroom'),
                               onTap: () {
@@ -782,7 +838,7 @@ Text('  ')
                                   MaterialPageRoute(builder: (context) => HomeChat()),
                                                   );
                                    },
-                            ),  
+                            ),*/  
                             ListTile(
                               leading: Icon(Icons.accessibility),
                               title: Text('Accessibility Features'),
@@ -836,6 +892,20 @@ Text('  ')
                                 );
                               },
                             ),
+                            ListTile(
+                              leading: Icon(Icons.album),
+                              title: Text('Translation Page'),
+                              onTap: () {
+                                _toggleMenu();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        MyHomePage(asrResultValue: _asrResult,),
+                                  ),
+                                );
+                              },
+                            ),
                           ],
                         ),
                       ),
@@ -851,7 +921,7 @@ Text('  ')
   }
 }
 
-class TranscriptionHistoryPage extends StatelessWidget {
+/*class TranscriptionHistoryPage extends StatelessWidget {
   final List<String> filenames = [
     'Transcription 1',
     'Transcription 2',
@@ -863,6 +933,7 @@ class TranscriptionHistoryPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: Colors.black38,
         title: Text('Transcription History'),
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
@@ -872,9 +943,15 @@ class TranscriptionHistoryPage extends StatelessWidget {
         ),
       ),
       body: Container(
+         decoration: BoxDecoration(
+        image: DecorationImage(
+          image: AssetImage('assets/images/photo_2023-08-01_14-12-32.jpg'),
+          fit: BoxFit.cover,
+        ),
+      ),
         padding: EdgeInsets.all(16.0),
         width: double.infinity,
-        color: Colors.black, // Set the background color to black for high contrast
+        //color: Color.fromARGB(255, 128, 163, 179), // Set the background color to black for high contrast
         child: ListView.builder(
           itemCount: filenames.length,
           itemBuilder: (BuildContext context, int index) {
@@ -928,6 +1005,7 @@ class TranscriptionHistoryPage extends StatelessWidget {
                             ElevatedButton(
                               onPressed: () {
                                 // Handle translation logic here
+                                
                               },
                               child: Text('New Recording'),
                               style: ElevatedButton.styleFrom(
@@ -965,7 +1043,189 @@ class TranscriptionHistoryPage extends StatelessWidget {
       ),
     );
   }
+}*/
+
+class RecordedTranscription {
+  String audioPath;
+  String transcription;
+
+  RecordedTranscription({required this.audioPath, required this.transcription});
 }
+
+class TranscriptionHistoryPage extends StatelessWidget {
+   Future<void> _deleteRecordingFromDatabase(String audioPath) async {
+    DatabaseHelper dbHelper = DatabaseHelper();
+    Database? db = await dbHelper.database;
+    await db!.delete('Recordings', where: 'audioPath = ?', whereArgs: [audioPath]);
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.black38,
+        title: Text('Transcription History'),
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.pop(context); // Navigate back to the home page
+          },
+        ),
+      ),
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/photo_2023-08-01_14-12-32.jpg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        padding: EdgeInsets.all(16.0),
+        width: double.infinity,
+        child: FutureBuilder<List<RecordedTranscription>>(
+          future: _loadRecordingsFromDatabase(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return CircularProgressIndicator();
+            }
+
+            if (snapshot.hasError) {
+              return Text('Error: ${snapshot.error}');
+            }
+
+            List<RecordedTranscription>? recordings = snapshot.data;
+
+            if (recordings == null || recordings.isEmpty) {
+              return Center(
+                child: Text('No recordings available.'
+                ),
+              );
+            }
+
+            return ListView.builder(
+              itemCount: recordings.length,
+              itemBuilder: (BuildContext context, int index) {
+                final RecordedTranscription recording = recordings[index];
+
+                return InkWell(
+                  onTap: () {
+                    showDialog(
+                      context: context,
+                      builder: (BuildContext context) {
+                        return AlertDialog(
+                          content: Container(
+                            width: double.maxFinite,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  recording.transcription,
+                                  style: TextStyle(
+                                    fontSize: 24.0,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black, // Set the text color to black for high contrast
+                                  ),
+                                ),
+                                SizedBox(height: 16.0),
+                                IconButton(
+                                  icon: Icon(Icons.play_arrow),
+                                  onPressed: () {
+                                    // Implement audio playback logic here
+                                    playAudio(recording.audioPath);
+                                  },
+                                  color: Colors.black, // Set the icon color to black for high contrast
+                                ),
+                                SizedBox(height: 16.0),
+                                TextField(
+                                  readOnly: true,
+                                  controller: TextEditingController(
+                                    text: recording.transcription,
+                                  ),
+                                  style: TextStyle(
+                                    color: Colors.black, // Set the text color to black for high contrast
+                                  ),
+                                  decoration: InputDecoration(
+                                    labelText: 'Your text here',
+                                    labelStyle: TextStyle(
+                                      color: Colors.black, // Set the label color to black for high contrast
+                                    ),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: Colors.black, // Set the border color to black for high contrast
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                SizedBox(height: 16.0),
+                                ElevatedButton(
+                                  onPressed: () async {
+                                  await _deleteRecordingFromDatabase(recording.audioPath);
+                                  (context as Element).markNeedsBuild();
+                                  },
+                                  child: Text('Delete Recording'),
+                                  style: ElevatedButton.styleFrom(
+                                    primary: Colors.black, // Set the button background color to black for high contrast
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                  child: Container(
+                    margin: EdgeInsets.only(bottom: 16.0),
+                    decoration: BoxDecoration(
+                      color: Colors.white, // Set the container background color to white for high contrast
+                      borderRadius: BorderRadius.circular(10.0),
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(16.0),
+                      child: Text(
+                        recording.transcription,
+                        style: TextStyle(
+                          fontSize: 24.0,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black, // Set the text color to black for high contrast
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  // Audio playback function using audioplayers package
+  void playAudio(String audioPath) {
+    AudioPlayer audioPlayer = AudioPlayer();
+  
+    audioPlayer.play(UrlSource(audioPath));
+  }
+
+  // Load recorded transcriptions from the database
+  Future<List<RecordedTranscription>> _loadRecordingsFromDatabase() async {
+    List<RecordedTranscription> recordedTranscriptions = [];
+    DatabaseHelper dbHelper = DatabaseHelper();
+    Database? db = await dbHelper.database;
+    List<Map<String, dynamic>> recordings = await db!.query('Recordings');
+    for (var recording in recordings) {
+      recordedTranscriptions.add(
+        RecordedTranscription(
+          audioPath: recording['audioPath'],
+          transcription: recording['transcription'],
+        ),
+      );
+    }
+    return recordedTranscriptions;
+  }
+}
+
+// DatabaseHelper class remains the same as provided in the previous responses
+
 
 class AccessibilityOptionsPage extends StatelessWidget {
   final Function(bool) toggleMultilingualSupport;
@@ -1017,6 +1277,7 @@ class AccessibilityOptionsPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: Text('Accessibility Options'),
+        backgroundColor: Colors.black38,
       ),
       body: ListView(
         padding: EdgeInsets.all(16),
@@ -1027,6 +1288,7 @@ class AccessibilityOptionsPage extends StatelessWidget {
             subtitle: Text('Provide support for multiple languages'),
             trailing: Switch(
               value: multilingualSupportEnabled,
+              activeColor: Colors.black38,
               onChanged: (value) async{
                 await toggleMultilingualSupport(value);
                 Navigator.pop(context,multilingualSupportEnabled);
@@ -1043,9 +1305,10 @@ class AccessibilityOptionsPage extends StatelessWidget {
             trailing: Switch(
               value: speechToTextTranscriptionEnabled,
               onChanged: toggleSpeechToTextTranscription,
+              activeColor: Colors.black38,
             ),
           ),
-          ListTile(
+          /*ListTile(
             leading: Icon(Icons.visibility),
             title: Text('Visual Feedback'),
             subtitle: Text('Provide visual indicators or feedback'),
@@ -1053,8 +1316,8 @@ class AccessibilityOptionsPage extends StatelessWidget {
               value: visualFeedbackEnabled,
               onChanged: toggleVisualFeedback,
             ),
-          ),
-          ListTile(
+          ),*/
+          /*ListTile(
             leading: Icon(Icons.volume_up),
             title: Text('Text-to-Speech Output'),
             subtitle: Text('Convert text into spoken words'),
@@ -1062,8 +1325,8 @@ class AccessibilityOptionsPage extends StatelessWidget {
               value: textToSpeechOutputEnabled,
               onChanged: toggleTextToSpeechOutput,
             ),
-          ),
-          ListTile(
+          ),*/
+          /*ListTile(
             leading: Icon(Icons.speed),
             title: Text('Adjustable Playback Speed'),
             subtitle: Text('Allow users to control the playback speed'),
@@ -1071,8 +1334,8 @@ class AccessibilityOptionsPage extends StatelessWidget {
               value: adjustablePlaybackSpeedEnabled,
               onChanged: toggleAdjustablePlaybackSpeed,
             ),
-          ),
-          ListTile(
+          ),*/
+          /*ListTile(
             leading: Icon(Icons.color_lens),
             title: Text('High Contrast UI'),
             subtitle: Text('Enable high contrast user interface'),
@@ -1080,8 +1343,8 @@ class AccessibilityOptionsPage extends StatelessWidget {
               value: highContrastUIEnabled,
               onChanged: toggleHighContrastUI,
             ),
-          ),
-          ListTile(
+          ),*/
+          /*ListTile(
             leading: Icon(Icons.keyboard),
             title: Text('Keyboard Navigation'),
             subtitle: Text('Navigate the app using the keyboard'),
@@ -1089,8 +1352,8 @@ class AccessibilityOptionsPage extends StatelessWidget {
               value: keyboardNavigationEnabled,
               onChanged: toggleKeyboardNavigation,
             ),
-          ),
-          ListTile(
+          ),*/
+          /*ListTile(
             leading: Icon(Icons.keyboard_hide),
             title: Text('Alternative Input Methods'),
             subtitle: Text('Support alternative input methods'),
@@ -1098,8 +1361,8 @@ class AccessibilityOptionsPage extends StatelessWidget {
               value: alternativeInputMethodsEnabled,
               onChanged: toggleAlternativeInputMethods,
             ),
-          ),
-          ListTile(
+          ),*/
+          /*ListTile(
             leading: Icon(Icons.closed_caption),
             title: Text('Captioning Support'),
             subtitle: Text('Provide captions for audio and video content'),
@@ -1107,8 +1370,8 @@ class AccessibilityOptionsPage extends StatelessWidget {
               value: captioningSupportEnabled,
               onChanged: toggleCaptioningSupport,
             ),
-          ),
-          ListTile(
+          ),*/
+          /*ListTile(
             leading: Icon(Icons.rule),
             title: Text('Accessibility Guidelines Compliance'),
             subtitle: Text('Ensure compliance with accessibility guidelines'),
@@ -1116,8 +1379,84 @@ class AccessibilityOptionsPage extends StatelessWidget {
               value: accessibilityGuidelinesComplianceEnabled,
               onChanged: toggleAccessibilityGuidelinesCompliance,
             ),
-          ),
+          ),*/
         ],
+      ),
+    );
+  }
+}
+
+// ignore: must_be_immutable
+class MyHomePage extends StatelessWidget {
+
+   TextEditingController textController1 = TextEditingController();
+ String asrResultValue='';
+ MyHomePage({required this.asrResultValue});
+
+   @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Translation Page'),
+        backgroundColor: Colors.black38,
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Container(
+           decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/photo_2023-08-02_03-56-48.jpg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+          width: 300,
+          child: Card(
+            elevation: 4.0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16.0),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: textController1,
+                    decoration: InputDecoration(
+                      hintText: 'Transcribed Twi',
+                      labelText: 'Twi',
+                    ),
+                  ),
+                  SizedBox(height: 16),
+                  TextField(
+                    decoration: InputDecoration(
+                      hintText: '',
+                      labelText: 'English',
+                    ),
+                  ),
+                  SizedBox(height: 24),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      ElevatedButton(
+                        onPressed: () {
+                          textController1.text=asrResultValue;
+                        },
+                        child: Text('Display'),
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          // Perform action for button 2
+                        },
+                        child: Text('Translate'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

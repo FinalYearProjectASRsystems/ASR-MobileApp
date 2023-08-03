@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-
+import 'package:google_fonts/google_fonts.dart';
 class CardExampleApp extends StatelessWidget {
-  final String asrResultValue;
+   String asrResultValue;
 
   CardExampleApp({required this.asrResultValue});
 
@@ -16,19 +16,21 @@ class CardExampleApp extends StatelessWidget {
               leading: Icon(Icons.album),
               title: Text(
                 'Transcribed Twi',
-                style: TextStyle(fontFamily: 'NotoSans', fontSize: 18),
+                style: GoogleFonts.lobster
+                (textStyle: TextStyle(fontFamily: 'NotoSans', fontSize: 18),)
               ),
               subtitle: Text(
                 asrResultValue,
-                style: TextStyle(fontFamily: 'NotoSans'),
-              ),
+                style: GoogleFonts.laBelleAurore
+                (textStyle: TextStyle(fontFamily: 'NotoSans', fontSize: 24),)
+              )
             ),
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: <Widget>[
                 TextButton(
                   child: Text(
-                    'Copy',
+                    '',
                     style: TextStyle(fontFamily: 'NotoSans'),
                   ),
                   onPressed: () {/* ... */},
@@ -36,7 +38,7 @@ class CardExampleApp extends StatelessWidget {
                 SizedBox(width: 8),
                 TextButton(
                   child: Text(
-                    'Translate',
+                    '',
                     style: TextStyle(fontFamily: 'Noto Sans'),
                   ),
                   onPressed: () {/* ... */},
